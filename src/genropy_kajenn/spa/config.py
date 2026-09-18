@@ -91,7 +91,7 @@ class ServerConfiguration(AsgiConfigBuilder):
             source, "data", "_frozen_users"
         )
         instance_dir = os.environ.get("KAJENN_INSTANCE_DIR") or os.path.join(
-            tempfile.gettempdir(), f"gnrasgi_{site_key}"
+            tempfile.gettempdir(), f"gnrkajenn_{site_key}"
         )
         # mount="" IS the site root: a genropy site owns its absolute URLs
         # (/_rsrc, /sys, the dojo tree), so it cannot live under a /site prefix.

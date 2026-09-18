@@ -13,4 +13,6 @@ this package never requires genropy.
 from .genropy_spa_application import GenropySpaApplication
 
 __all__ = ["GenropySpaApplication"]
-__version__ = "0.6.0"
+from importlib.metadata import version as _distribution_version
+
+__version__ = _distribution_version("genropy-kajenn")

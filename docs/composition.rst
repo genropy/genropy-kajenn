@@ -1,129 +1,145 @@
 Add more apps beside the site
 =============================
 
-Serve a REST/OpenAPI surface, an MCP endpoint, or a native async app next to the
-legacy site — on one port, one origin, sharing the same genropy database and the
-same session cookie. This page gives you the recipes.
+Serve a REST/OpenAPI surface, an MCP endpoint or a native async app next to the
+legacy site — one process, one port, one origin, the same genropy database.
 
-Pick a growth pattern
----------------------
+Applications are declared, never mounted
+----------------------------------------
 
-There are **two ways** to grow native ASGI surface next to the site:
+``AsgiServer`` builds every application from its configuration. There is no
+``mount`` method and no application instance to hand over: you write a recipe, a
+subclass of kajenn's ``AsgiConfigBuilder``, and name the class and its kwargs
+there. ``gnrkajenn --config path/to/recipe.py`` runs it.
 
-* **Beside** — mount separate apps, each on its own path prefix (``/api/``,
-  ``/mcp/``, …). The site keeps ``/``; the new apps live under paths it never used.
-* **In place** — add native routes to the host application itself, replacing
-  individual site paths one at a time (a ``/sys/health`` served natively while the
-  rest of ``/sys/*`` stays legacy). This is the incremental-migration path.
+Start from ``genropy_kajenn/spa/config.py`` — the recipe every default launch
+uses — and add to it. Reading it is the shortest answer to any question this page
+does not cover.
 
-Both share the same foundation: a **multi-app ASGI server** — one process, one
-port, **one origin** — where every app can talk to the *same genropy database* the
-site uses. The typical *beside* shape:
+Two ways to grow
+----------------
 
-* ``/`` — the legacy ``GnrWsgiSite`` (the UI),
-* ``/api/`` — a REST/OpenAPI surface,
-* ``/mcp/`` — an MCP endpoint for AI agents,
-* ``/live/`` — a native async app of your own.
+* **Beside** — declare separate applications, each on its own mount (``api``,
+  ``mcp``, …). The site keeps the root; the new applications answer on first path
+  segments the site never used.
+* **In place** — add native routes to the front itself, on paths the site already
+  owns, so they shadow the legacy handler one path at a time.
 
-Add a REST / OpenAPI API on the site's database
------------------------------------------------
+Beside: a REST / OpenAPI surface on the site's database
+-------------------------------------------------------
 
 ``GenropyProxyOpenApiApplication`` (from ``genropy_kajenn.proxy``) hosts a
-``GnrApp`` behind an ``OpenApiApplication``. Your routing class exposes plain
-methods as REST; the mixin closes the db connection on the executor thread after
-each call. Point it at the same instance the site serves — same database,
-different surface:
+``GnrApp`` behind kajenn's ``OpenApiApplication``. Your routing class exposes
+plain methods as REST; the mixin closes the thread-local database connection on
+the executor thread after each handler, which is where it is thread-correct.
+Point it at the same instance the site serves:
 
 .. code-block:: python
+
+   from kajenn.config import AsgiConfigBuilder
 
    from genropy_kajenn.proxy import GenropyProxyOpenApiApplication
+   from genropy_kajenn.spa.genropy_spa_application import GenropySpaApplication
 
-   api = GenropyProxyOpenApiApplication(
-       instance="mysite",        # the same genropy instance the site serves
-       routing_class=MyApi(),    # your @route-decorated methods
-       docs="swagger",           # swagger | redoc | off
-   )
-   server.mount("api", api)      # → now on /api/
 
-Reuse the same class as MCP
----------------------------
+   class ServerConfiguration(AsgiConfigBuilder):
+       def main(self, root):
+           cfg = root.configuration()
+           cfg.server(host="127.0.0.1", port=8000)
+           cfg.middleware()
+           applications = cfg.applications()
+           applications.application(code="api", mount="api",
+                                    app_class=GenropyProxyOpenApiApplication,
+                                    instance="mysite",      # the genropy instance
+                                    module="myproject.api",  # the routing class
+                                    docs="swagger")
+           # ... the site front and its orchestration node, as in spa/config.py
 
-Expose the same routing class as an **MCP** endpoint with
-``McpOpenApiApplication`` (from ``kajenn.applications.openapi_application``):
-the MCP engine points at the same router, so one set of methods serves both a REST
-client and an AI agent — no second implementation.
+``instance`` is required: the mixin raises ``ValueError`` without one. Supply the
+API either as ``routing_class=`` (an instance) or as ``module=`` (a dotted path
+the application imports). The mounted class is attached under ``api_name``, which
+defaults to ``api``, so a method named ``customers`` answers on
+``/api/api/customers``; set ``api_name`` to change that segment. The OpenAPI meta
+endpoints sit under ``_meta`` — ``/api/_meta/`` — in every case.
 
-.. code-block:: python
+Beside: the same class as MCP
+-----------------------------
 
-   from kajenn.applications.openapi_application import McpOpenApiApplication
-
-   server.mount("mcp", McpOpenApiApplication(routing_class=MyApi(), api_name="tools"))
-   # → now on /mcp/
-
-Replace site paths one at a time (in place)
--------------------------------------------
-
-The *beside* apps above live under their own prefixes. The **in-place** pattern is
-different: it adds native routes to the host application itself, on paths the site
-already owns, and lets them shadow the legacy handler **one path at a time** — the
-native surface grows while the site keeps serving everything not yet moved, with no
-second deployment and no cut-over.
-
-Subclass the host application and add the route:
+``McpOpenApiApplication`` (from ``kajenn.applications.mcp``) is
+``OpenApiApplication`` plus an MCP face over the very same router: one set of
+methods serves a REST client and an agent, with no second implementation.
 
 .. code-block:: python
 
-   from kajenn import route
-   from genropy_kajenn.spa import GenropySpaApplication
+   from kajenn.applications.mcp import McpOpenApiApplication
+
+   applications.application(code="tools", mount="tools",
+                            app_class=McpOpenApiApplication,
+                            module="myproject.api")
+
+The MCP JSON-RPC face answers under ``mcp_name_segment``, which defaults to
+``mcp`` — so ``/tools/mcp``. Which methods are visible there is the ``channel``
+plugin's job: the MCP face lists only entries declared on channel ``mcp``, and a
+method that declares nothing stays REST-only.
+
+That class has no genropy database of its own. To expose a genropy database as
+MCP, compose ``GenropyProxyMixin`` with it the way
+``GenropyProxyOpenApiApplication`` composes it with ``OpenApiApplication``: the
+mixin comes first, so it owns ``__init__``, ``route_cleanup`` and
+``on_shutdown``, and the base keeps its own machinery.
+
+In place: replace site paths one at a time
+------------------------------------------
+
+The front demultiplexes in two stages. Stage one reads the first segment of the
+path: not one of the application's own first-level roots, and the path belongs to
+the hosted site. Stage two resolves the full path in the application's own
+router: the node exists, so the request is served natively; a structural miss
+under a claimed root falls through to the site after all.
+
+Claiming a root therefore does **not** claim its whole subtree. A single native
+route shadows exactly its own path, and the site keeps serving every sibling.
+
+.. code-block:: python
+
+   from genro_routes import route
+
+   from genropy_kajenn.spa.genropy_spa_application import GenropySpaApplication
+
 
    class MySite(GenropySpaApplication):
        @route(media_type="application/json")
-       def sys_health(self):        # /sys/health is now native…
+       def sys_health(self):
            return {"status": "ok"}
-       # …/sys/customer, /sys/order, … still render on the legacy site.
 
-Then point ``app_class`` at ``MySite`` in the config recipe (the same seam the
-built-in ``GenropySpaApplication`` uses for ``/metrics``). Migrate the
-stateless service paths first (health, metrics, small JSON APIs); paths that need
-the legacy page context — session, avatar, rendered state — are the last to move.
+Then name ``MySite`` as the ``app_class`` of the site application in the recipe.
+It is the same seam ``GenropySpaApplication`` itself uses for ``metrics``. Move
+the stateless service paths first; paths that need the legacy page context —
+session, avatar, rendered state — are the last to move.
 
 .. note::
 
-   This is the shape of the classic *strangler fig* migration (Martin Fowler): the
-   new system grows around the old and replaces it gradually, with a working system
-   at every step. Nothing forces you to do this — it is simply what the two-stage
-   demux makes possible when you want it. The host demultiplexes in two stages: the
-   first path segment selects an internal root, then the full path is resolved in
-   the app's own router; a structural miss inside a claimed root falls through to
-   the site. Claiming a root therefore does *not* claim its whole subtree — a single
-   native ``@route`` shadows exactly its own path.
+   This is the shape of the strangler fig migration: the new system grows around
+   the old and replaces it gradually, with a working system at every step.
+   Nothing forces it — it is what the two-stage demux makes possible.
 
-Embed a new endpoint from a legacy page
----------------------------------------
+One origin
+----------
 
-Because every app lives under one host and port, the browser sees **one origin**:
+Every application lives under one host and port, so the browser sees one origin:
 no CORS to configure, and the legacy session cookie is sent to every path. A
-legacy genropy page can therefore reach a new ASGI endpoint directly — with the
-user's session already authenticated:
+legacy genropy page can reach a new endpoint directly — a ``fetch("/api/…")``
+from page code, or an ``<iframe>`` embedding a modern view inside the classic UI.
 
-* ``fetch("/api/…")`` from page code, or
-* ``<iframe src="/live/…">`` embedding a modern async view inside the classic UI.
+The framework injects nothing into legacy pages. You embed from the legacy side,
+pointing at the declared mount.
 
-New surfaces grow next to the old pages without a second deployment, a second
-domain, or a token exchange.
+Where the extra applications run
+--------------------------------
 
-.. note::
-
-   "Same origin" is what makes embedding *easy* (shared cookies, no CORS) — the
-   framework does not inject ASGI markup into legacy pages for you. You embed from
-   the legacy side (a ``fetch``, an ``iframe``, a script tag) pointing at the
-   mounted path.
-
-Mount the extra apps in a pool
-------------------------------
-
-In a pool, mount the extra apps on the **same server as the front**. The front
-forwards only the site's own traffic to the workers (every path whose first
-segment is not one of its own **internal roots**); apps mounted beside it are
-served locally, in the front's process. Each keeps its own ``GnrApp`` and closes
-its db connection on the right thread — independent of the workers hosting the site.
+They run in the **server process**, beside the front — not in the workers. The
+front forwards to the workers only what belongs to the hosted site: every path
+whose first segment is not one of its own roots. An application declared on its
+own mount is a different first segment, so it is served locally. Each keeps its
+own ``GnrApp`` and closes its database connection on the thread that used it,
+independently of the workers hosting the site.
