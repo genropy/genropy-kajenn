@@ -66,7 +66,7 @@ selection, classic genropy retains its original handler.
 
 The provider returns True from `checkSocket` and ignores `sendCommandToPage`,
 including the old `registerNewPage` command. Its `client_module` selects
-`gnrwebsocket_wsx.js`. Site WebSocket enablement is still required.
+`gnrwebsocket_kajenn.js`. Site WebSocket enablement is still required.
 
 The client uses the current origin and opens `/_wsx/openchannel` with the page ID.
 It now sends application calls to the page's ordinary RPC path. The core validates

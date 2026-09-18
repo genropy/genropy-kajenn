@@ -35,7 +35,7 @@ What genropy consumes, and nothing else:
 
 ``client_module``
     the javascript module name that replaces ``gnrwebsocket`` in the frontend
-    imports. ``gnrwebsocket_wsx`` is the name of the client genropy ships for
+    imports. ``gnrwebsocket_kajenn`` is the name of the client genropy ships for
     this contract; it opens the page channel, pings, and sends correlated WSK
     calls. A handler without the attribute leaves the frontend imports
     untouched.
@@ -49,7 +49,7 @@ through ``wsk_enabled`` push paths, which stay on the pull road.
 class WsgiWebSocketHandler:
     """The websocket handler of a site served by the bridge."""
 
-    client_module = "gnrwebsocket_wsx"
+    client_module = "gnrwebsocket_kajenn"
 
     def __init__(self, site):
         self.site = site
