@@ -11,7 +11,10 @@ exactly the legacy site:
   and ``debug``, builds the ``GnrWsgiSite`` (the Werkzeug debugger wrapper
   when ``debugger``, ``site._local_mode = True``, atexit ``on_site_stop``) and
   assigns the possibly-wrapped site to ``self.wsgi_app`` — the core's
-  consumer seam for the http CALL form;
+  consumer seam for the http CALL form — behind a
+  :class:`~genropy_kajenn.spa.websocket_receiver.WebSocketReceiver`, which
+  hands http straight to the site and turns a ``WSK`` call into the site's
+  ordinary rpc;
 - the site's lazy per-process state is settled right after creation,
   single-threaded (``site.resources_dirs``; ``site.storage("gnr")`` —
   genropy#984): the first concurrent request must not race the resource
@@ -86,6 +89,7 @@ from genro_tytx import from_tytx
 from .delivery_desk import STATE_KINDS
 from .genropy_register import GenropyRegistry
 from .site_engine_factory import GenropySiteEngineFactory
+from .websocket_receiver import WebSocketReceiver
 
 log = logging.getLogger("genropy_kajenn.spa")
 
@@ -265,6 +269,7 @@ class GenropyWorker(SpaWorker):
         self._gnr_site.storage("gnr")
         self._gnr_site.storage("dojo")
         self._gnr_site.spa_worker = self
+        self.wsgi_app = WebSocketReceiver(self.wsgi_app)
 
     def build_registry(self) -> RegisterRegistry:
         """The registry factory: legacy stores under legacy capture."""
