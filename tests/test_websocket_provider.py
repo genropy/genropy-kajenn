@@ -1,7 +1,13 @@
 # Copyright 2025 Softwell S.r.l.
 # Licensed under the Apache License, Version 2.0
 
-"""Exercise provider discovery in fresh interpreters with real legacy imports."""
+"""Exercise provider selection in fresh interpreters with real legacy imports.
+
+genropy resolves the ``gnr.web:websockethandler`` entry point in
+``websocketHandlerClass()``, called while a site is built — importing the module
+has no side effect. An installed genropy without that function predates the
+selector, and every test that needs it skips.
+"""
 
 import os
 from pathlib import Path
@@ -10,6 +16,9 @@ import sys
 import tempfile
 import tomllib
 import unittest
+
+SELECTOR = ('from gnr.web.gnrwsgisite_proxy.gnrwebsockethandler '
+            'import WsgiWebSocketHandler, websocketHandlerClass\n')
 
 
 class WebSocketProviderTest(unittest.TestCase):
@@ -34,28 +43,37 @@ class WebSocketProviderTest(unittest.TestCase):
                 [sys.executable, '-c', code], env=env,
                 capture_output=True, text=True, timeout=20)
 
-    def selecting_genropy(self):
-        """Import under an absent provider; skip where genropy does not select one."""
-        probe = self.run_import('missing-provider', '''
-from gnr.web.gnrwsgisite_proxy.gnrwebsockethandler import WsgiWebSocketHandler
-''')
-        if probe.returncode == 0:
-            self.skipTest('the installed genropy resolves no gnr.web:websockethandler')
-        return probe
+    def require_selector(self):
+        """Skip where the installed genropy has no websocket selector."""
+        probe = self.run_import(None, SELECTOR)
+        if probe.returncode != 0:
+            self.skipTest('the installed genropy has no websocketHandlerClass')
 
-    def test_bridge_import_does_not_open_socket(self):
-        self.selecting_genropy()
-        result = self.run_import('genropy-kajenn', '''
-import gnr
+    def test_the_selected_handler_is_this_package_and_opens_no_socket(self):
+        self.require_selector()
+        result = self.run_import('genropy-kajenn', SELECTOR + '''
 from unittest.mock import patch
 with patch('socket.socket', side_effect=AssertionError('unexpected socket')):
-    from gnr.web.gnrwsgisite_proxy.gnrwebsockethandler import WsgiWebSocketHandler
     from genropy_kajenn.websockethandler import WsgiWebSocketHandler as Expected
-    assert WsgiWebSocketHandler is Expected
-    handler = WsgiWebSocketHandler(object())
+    handler_class = websocketHandlerClass()
+    assert handler_class is Expected
+    handler = handler_class(object())
     assert handler.checkSocket() is True
     assert handler.sendCommandToPage('', 'registerNewPage', {}) is None
     assert handler.sendCommandToPage('page', 'publish', {}) is None
+''')
+        self.assertEqual(result.returncode, 0, result.stderr)
+
+    def test_the_named_client_is_a_module_genropy_ships(self):
+        """``client_module`` must name a file, or the page would load nothing."""
+        self.require_selector()
+        result = self.run_import('genropy-kajenn', SELECTOR + '''
+from pathlib import Path
+import gnr
+client = websocketHandlerClass().client_module
+root = Path(gnr.__file__).resolve().parents[2]
+found = list(root.glob(f'gnrjs/*/js/{client}.js'))
+assert found, f'{client}.js is in no gnrjs frontend under {root}'
 ''')
         self.assertEqual(result.returncode, 0, result.stderr)
 
@@ -66,10 +84,13 @@ assert WsgiWebSocketHandler.__module__ == 'gnr.web.gnrwsgisite_proxy.gnrwebsocke
 ''')
         self.assertEqual(result.returncode, 0, result.stderr)
 
-    def test_missing_provider_fails_explicitly(self):
-        result = self.selecting_genropy()
-        self.assertNotEqual(result.returncode, 0)
-        self.assertIn('matches 0', result.stderr)
+    def test_a_provider_this_package_does_not_declare_keeps_the_classic_handler(self):
+        """The register may be replaced without the socket: no error, no swap."""
+        self.require_selector()
+        result = self.run_import('another-provider', SELECTOR + '''
+assert websocketHandlerClass() is WsgiWebSocketHandler
+''')
+        self.assertEqual(result.returncode, 0, result.stderr)
 
 
 if __name__ == '__main__':

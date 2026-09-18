@@ -3,12 +3,14 @@
 
 """The websocket handler genropy builds as ``site.wsk`` when the bridge is selected.
 
-genropy's ``gnr.web.gnrwsgisite_proxy.gnrwebsockethandler`` module resolves the
-name ``WsgiWebSocketHandler`` through the ``gnr.web`` entry point
-``websockethandler`` when ``GNR_DAEMON_PROVIDER`` is set, the same variable that
-already selects the register provider. ``genropy_kajenn.spa.cli`` sets it to
-``genropy-kajenn``, the distribution name this package publishes, and this module
-is what the entry point names. Without the variable genropy keeps its own class
+genropy's ``gnr.web.gnrwsgisite_proxy.gnrwebsockethandler.websocketHandlerClass``
+resolves the ``gnr.web`` entry point ``websockethandler`` when
+``GNR_DAEMON_PROVIDER`` is set, the same variable that already selects the
+register provider. A provider that declares no such entry point keeps genropy's
+own handler, so the register can be replaced without the socket.
+``genropy_kajenn.spa.cli`` sets the variable to ``genropy-kajenn``, the
+distribution name this package publishes, and this module is what the entry
+point names. Without the variable genropy keeps its own class
 and this module is never loaded.
 
 What genropy consumes, and nothing else:
@@ -33,9 +35,10 @@ What genropy consumes, and nothing else:
 
 ``client_module``
     the javascript module name that replaces ``gnrwebsocket`` in the frontend
-    imports. ``gnrwebsocket_asgi`` is the name of the client genropy ships for
-    this contract; it opens the page channel and sends correlated WSK calls.
-    A handler without the attribute leaves the frontend imports untouched.
+    imports. ``gnrwebsocket_wsx`` is the name of the client genropy ships for
+    this contract; it opens the page channel, pings, and sends correlated WSK
+    calls. A handler without the attribute leaves the frontend imports
+    untouched.
 
 ``setInClientData``, ``fireInClientData`` and ``publishToClient`` are part of
 genropy's own handler and are not part of this contract: a page reaches them only
@@ -46,7 +49,7 @@ through ``wsk_enabled`` push paths, which stay on the pull road.
 class WsgiWebSocketHandler:
     """The websocket handler of a site served by the bridge."""
 
-    client_module = "gnrwebsocket_asgi"
+    client_module = "gnrwebsocket_wsx"
 
     def __init__(self, site):
         self.site = site
