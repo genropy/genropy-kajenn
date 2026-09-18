@@ -23,6 +23,9 @@ jobs:
       - name: Install project with dev extras
         run: |
           python -m pip install --upgrade pip
+          # genropy is imported at runtime and is not a declared dependency:
+          # the bridge hosts a site the operator already has. The tests need it.
+          pip install genropy
           pip install ".[dev]"
 
       - name: Ruff

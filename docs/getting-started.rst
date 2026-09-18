@@ -44,11 +44,12 @@ namespace only when ``GNR_DAEMON_PROVIDER`` names a provider, and
 machinery. Consequence worth knowing: the classic stack and this one can share
 one virtualenv, because the choice is made per process and not per installation.
 
-To follow current development, take **both** packages from GitHub:
+To follow current development, take the three packages from GitHub:
 
 .. code-block:: console
 
-   $ pip install git+https://github.com/genropy/genro-asgi.git
+   $ pip install git+https://github.com/kajenn-org/kajenn.git
+   $ pip install git+https://github.com/kajenn-org/kajenn-orchestra.git
    $ pip install git+https://github.com/genropy/genropy-kajenn.git
 
 From a checkout, for development:
