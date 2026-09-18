@@ -18,7 +18,7 @@ relative name and put `.` on the import path).
 **A running instance.** The single process:
 
 ```bash
-PGGSSENCMODE=disable genropy-kajenn test_invoice_pg -p 8099 --nodebug
+PGGSSENCMODE=disable gnrkajenn test_invoice_pg -p 8099 --nodebug
 ```
 
 `PGGSSENCMODE=disable` is required on macOS: libpq negotiating Kerberos in a

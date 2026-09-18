@@ -1,7 +1,7 @@
 # Copyright 2025 Softwell S.r.l.
 # Licensed under the Apache License, Version 2.0
 
-"""End-to-end: ``genropy-kajenn`` — the pool booted by the CLI, driven over HTTP.
+"""End-to-end: ``gnrkajenn`` — the pool booted by the CLI, driven over HTTP.
 
 The bridge from the outside: the CLI boots a ``GenropySpaApplication`` whose
 recipe-born commander (``SpaCommander``) spawns the reception worker hosting
@@ -51,7 +51,7 @@ def read_metrics(client: httpx.Client) -> dict[str, int]:
 
 @pytest.fixture(scope="module")
 def pool_server():
-    """genropy-kajenn as a real subprocess; yields its base URL."""
+    """gnrkajenn as a real subprocess; yields its base URL."""
     port = free_port()
     env = dict(os.environ)
     # macOS: libpq + Kerberos + fork segfaults the forked children without this.
@@ -70,7 +70,7 @@ def pool_server():
         ready = False
         while time.monotonic() < deadline:
             if process.poll() is not None:
-                pytest.skip("genropy-kajenn exited early (site/env not available)")
+                pytest.skip("gnrkajenn exited early (site/env not available)")
             try:
                 # /metrics is native (commander process); / forwards to the child,
                 # so a 200 on it means the worker subprocess hosts the site.

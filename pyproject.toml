@@ -50,7 +50,7 @@ docs = [
 ]
 
 [project.scripts]
-"genropy-kajenn" = "genropy_kajenn.spa.cli:main"
+gnrkajenn = "genropy_kajenn.spa.cli:main"
 
 # The daemonless register: the legacy `gnr.web.daemon` switcher imports the module
 # named here and installs it as `gnr.web.daemon`, so `SiteRegisterClient` and friends

@@ -709,7 +709,7 @@ side; the ones only this stack has are the two extra packages and the commits.
 
 | Condition | Standard value |
 |---|---|
-| Stack | bridge: `genropy-kajenn`, the register in-process, no daemon |
+| Stack | bridge: `gnrkajenn`, the register in-process, no daemon |
 | Processes / threads | pool ceiling 6 (`worker_max_number`), thread pools at the core's defaults |
 | Recorders | both, installed by the recipe naming the recording worker |
 | Debug | **off** (`--nodebug`) — same reason as on the legacy side |
@@ -738,7 +738,7 @@ GENRO_KJNFOLDER=$PWD/temp/gnr \
     -p 8098 --nodebug
 ```
 
-Every argument is the `genropy-kajenn` command line; the launcher adds only
+Every argument is the `gnrkajenn` command line; the launcher adds only
 `--config benchmarks/compare/bridge_recipe.py`, and leaves a `--config` the
 caller named alone. It prints the archive it is recording into.
 

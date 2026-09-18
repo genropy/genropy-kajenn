@@ -7,7 +7,7 @@ Fix startup failures
 --------------------
 
 **"site name is required"**
-   You did not pass an instance. Pass one: ``genropy-kajenn mysite``.
+   You did not pass an instance. Pass one: ``gnrkajenn mysite``.
 
 **"no root.py in the site provided"**
    The instance resolves but the site directory has no ``root.py``. Check the path

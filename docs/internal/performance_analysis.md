@@ -47,7 +47,7 @@ Seconda passata pulita (5 client, 100 req, keep-alive), **vecchio daemon**:
 | | req/s | p50 | p99 | errori |
 |---|---|---|---|---|
 | WSGI dev (`gnrwsgiserve`) | 32,1 | 0,151 s | 0,212 s | 0 |
-| ASGI (`genropy-kajenn`)     | 26,5 | 0,152 s | 0,515 s | 0 |
+| ASGI (`gnrkajenn`)     | 26,5 | 0,152 s | 0,515 s | 0 |
 
 A basso carico **p50 quasi identico**: il layer ASGI+proxy non aggiunge overhead
 percepibile sulla richiesta tipica. L'ASGI ha più varianza in coda (proxy
@@ -194,7 +194,7 @@ Nodi aperti del modello (da decidere quando lo si farà):
 
 ```
 # server di test (stessa istanza, daemon sotto)
-genropy-kajenn test_invoice_pg -p 8090                                  # ASGI 1 proc
+gnrkajenn test_invoice_pg -p 8090                                  # ASGI 1 proc
 gnrwsgiserve test_invoice_pg -p 8091                                  # WSGI dev 1 proc
 python -m gnr.web.cli.gnrserveprod test_invoice_pg -b 127.0.0.1:8092 -w 4   # WSGI gunicorn 4w
 # ASGI multi-worker (NON uvicorn --workers nativo: fallisce):

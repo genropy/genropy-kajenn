@@ -9,7 +9,7 @@ genropy-specific bridge on top of it. Three submodules, the only ``gnr.*``-aware
 
 - ``genropy_kajenn.spa`` — the SPA bridge: ``GenropySpaApplication`` (the front on
   the core ``SpaApplication``) whose pool workers are ``GenropyWorker`` instances
-  hosting a legacy ``GnrWsgiSite``, plus the ``genropy-kajenn`` CLI and the
+  hosting a legacy ``GnrWsgiSite``, plus the ``gnrkajenn`` CLI and the
   in-process register client.
 - ``genropy_kajenn.proxy`` — the OpenAPI bridge: a ``GnrApp`` behind an
   ``OpenApiApplication`` with thread-local db cleanup.

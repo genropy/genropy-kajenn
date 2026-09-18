@@ -3,7 +3,7 @@
 
 """CLI entry point: serve one genropy instance as a SPA — no daemon.
 
-``genropy-kajenn <instance>`` resolves the instance name to its filesystem path, then starts a
+``gnrkajenn <instance>`` resolves the instance name to its filesystem path, then starts a
 standard kajenn ``AsgiServer`` from the fixed ``config.py`` recipe, whose only variable
 element is that path (passed via the environment). The recipe mounts a single
 ``GenropySpaApplication`` on the root; auth and session stay inside the legacy GnrWsgiSite,
@@ -21,9 +21,9 @@ Name -> path resolution is the legacy genropy step and lives here (it uses ``gnr
 generic SPA model only ever sees a path.
 
 Usage:
-    genropy-kajenn test_invoice_pg
-    genropy-kajenn test_invoice_pg -p 8000
-    genropy-kajenn test_invoice_pg -H 0.0.0.0 -p 8080 --nodebug
+    gnrkajenn test_invoice_pg
+    gnrkajenn test_invoice_pg -p 8000
+    gnrkajenn test_invoice_pg -H 0.0.0.0 -p 8080 --nodebug
 
 ``--fulldebug`` adds the werkzeug debugger to debug; debug alone no longer
 brings it, so an error page that evaluates Python never appears by accident.
@@ -60,7 +60,7 @@ def resolve_instance_path(instance: str) -> str:
 
 def cmd_serve(argv: list[str]) -> int:
     """Resolve the instance path and start a standard AsgiServer hosting the SPA."""
-    parser = argparse.ArgumentParser(prog="genropy-kajenn")
+    parser = argparse.ArgumentParser(prog="gnrkajenn")
     parser.add_argument("instance", help="genropy instance/site name (or path)")
     parser.add_argument("-H", "--host", default=None)
     parser.add_argument("-p", "--port", type=int, default=None)
@@ -119,7 +119,7 @@ def cmd_serve(argv: list[str]) -> int:
 
 
 def main() -> int:
-    """Entry point for the genropy-kajenn command."""
+    """Entry point for the gnrkajenn command."""
     try:
         return cmd_serve(sys.argv[1:])
     except KeyboardInterrupt:

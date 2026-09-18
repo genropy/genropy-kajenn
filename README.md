@@ -15,7 +15,7 @@ over a supervised pool of worker processes, each user pinned to one of them.
 
 ## What it replaces
 
-- **`gnrwsgiserve`** (werkzeug/WSGI) → **`genropy-kajenn`** (uvicorn/ASGI). Same
+- **`gnrwsgiserve`** (werkzeug/WSGI) → **`gnrkajenn`** (uvicorn/ASGI). Same
   site, same options, unmodified code.
 - **The register daemon** (Pyro4, then `genro-nodaemon`) → an **in-process**
   register. There is no daemon to start or connect to.
@@ -39,7 +39,7 @@ plus an existing site). genropy is not a declared dependency of this package.
 ## Usage
 
 ```bash
-genropy-kajenn mysite -p 8080
+gnrkajenn mysite -p 8080
 # site on http://127.0.0.1:8080/index
 ```
 

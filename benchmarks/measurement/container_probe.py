@@ -64,7 +64,7 @@ class BridgeRoles:
         named = self.worker_pids.get(pid)
         if named:
             return named
-        if "genropy-kajenn" in cmd:
+        if "gnrkajenn" in cmd:
             return "commander"
         if "template_entry" in cmd:
             return "template" if ppid == "1" else "worker_unknown"

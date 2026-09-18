@@ -5,7 +5,7 @@
 
 The structural half (subclassing, the root mount, the startup source check)
 needs no genropy: the front holds no pool until the server starts. The BOOT
-half builds the shipped ``config.py`` recipe — the one ``genropy-kajenn``
+half builds the shipped ``config.py`` recipe — the one ``gnrkajenn``
 boots — all the way to an ``AsgiServer``, stopping short of ``serve()``: the
 pool is recipe words now, so a recipe the grammar rejects is a server that
 never starts, and the words must land where the core reads them
@@ -89,7 +89,7 @@ async def test_startup_refuses_a_group_without_a_source():
 def booted(monkeypatch):
     """The shipped ``config.py`` built to a server, the environment the CLI writes.
 
-    ``genropy-kajenn`` writes the instance path, the address and the debug flag to
+    ``gnrkajenn`` writes the instance path, the address and the debug flag to
     the environment and then hands ``config.py`` to ``AsgiServer``: this fixture
     is that boot, minus the ``serve()`` call. No site is opened — the commander
     spawns nothing until startup — so the path need not exist.

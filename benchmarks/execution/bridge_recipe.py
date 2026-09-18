@@ -7,7 +7,7 @@ PROVISIONAL: this copy changes only worker_class and engine_factory. The full
 recipe equivalence check guards drift, including optional applications and
 orchestration defaults. Keep this in the bridge laboratory, not the generic core.
 
-Used by the ``genropy-kajenn`` CLI: a normal multi-app ``AsgiServer`` on which the
+Used by the ``gnrkajenn`` CLI: a normal multi-app ``AsgiServer`` on which the
 genropy instance is mounted on the root. The variable elements (the resolved
 instance ``path``, host/port/debug, the installation paths, the idle valve)
 come from the environment; the rest of the recipe is fixed. No register daemon

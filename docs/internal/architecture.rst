@@ -58,7 +58,7 @@ it:
    The core ``SpaApplication``: it owns the user-sticky pool — the routing
    surface, the sticky cookie, the global-store master — and adds the genropy
    fit (the worker defaults, ``/metrics``, the memory budget). This is what
-   ``genropy-kajenn <site>`` runs, with or without ``--workers``.
+   ``gnrkajenn <site>`` runs, with or without ``--workers``.
 
 ``GenropyWorker`` (the *site host*)
    The core ``UserStickyWorker`` holding the ``GnrWsgiSite`` behind the

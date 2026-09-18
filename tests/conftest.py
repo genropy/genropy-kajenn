@@ -7,7 +7,7 @@ genropy gates the ``gnr.web.daemon`` entry-point override on an explicit
 request (genropy #1070): without ``GNR_DAEMON_PROVIDER`` the classic Pyro
 client would load and the in-process register would never engage. Declared
 here — conftest imports before any test module — so every test that builds a
-site runs on the bridge's register, exactly as ``genropy-kajenn`` does.
+site runs on the bridge's register, exactly as ``gnrkajenn`` does.
 """
 
 import os

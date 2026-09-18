@@ -1,7 +1,7 @@
 Configuration
 =============
 
-For an ordinary site there is nothing to configure. ``genropy-kajenn mysite``
+For an ordinary site there is nothing to configure. ``gnrkajenn mysite``
 builds a complete server from a fixed recipe, whose only variable elements come
 from the environment.
 
@@ -75,7 +75,7 @@ Environment variables
 The built-in recipe
 -------------------
 
-What ``genropy-kajenn`` builds, without a config file:
+What ``gnrkajenn`` builds, without a config file:
 
 * one ``GenropySpaApplication`` mounted on the **root**. A genropy site owns its
   absolute URLs — ``/_rsrc``, ``/sys``, the dojo tree — so it cannot live under
@@ -99,7 +99,7 @@ Set ``KAJENN_ORCHESTRATION_PROFILES=1`` and the recipe mounts kajenn's
 
 .. code-block:: console
 
-   $ KAJENN_ORCHESTRATION_PROFILES=1 genropy-kajenn mysite
+   $ KAJENN_ORCHESTRATION_PROFILES=1 gnrkajenn mysite
 
 The archive **stores** named JSON profiles in a directory of the site. It does
 not touch the running pool: applying a stored profile to the live
@@ -153,7 +153,7 @@ you need: it is a working recipe, not an example.
 
 .. code-block:: console
 
-   $ genropy-kajenn mysite --config path/to/my_config.py -p 8081
+   $ gnrkajenn mysite --config path/to/my_config.py -p 8081
 
 The CLI writes the instance, host and port to the environment before the server
 is built, so a recipe reading ``KAJENN_PATH`` serves the instance you named.

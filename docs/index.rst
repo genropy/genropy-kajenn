@@ -9,7 +9,7 @@ processes.
 
 It replaces two things at once:
 
-* ``gnrwsgiserve`` (the werkzeug/WSGI launcher) — with ``genropy-kajenn``;
+* ``gnrwsgiserve`` (the werkzeug/WSGI launcher) — with ``gnrkajenn``;
 * the register daemon (Pyro4, then ``genro-nodaemon``) — with an in-process
   register. There is no daemon to start.
 
@@ -17,7 +17,7 @@ It replaces two things at once:
 
 .. code-block:: console
 
-   $ genropy-kajenn mysite
+   $ gnrkajenn mysite
 
 That is the whole launch. There is no worker count to declare and no
 single/pool selector: the pool always runs, starts with one worker and grows

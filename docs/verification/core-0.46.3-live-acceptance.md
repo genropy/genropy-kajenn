@@ -38,7 +38,7 @@ site, both gated on environment variables).
 
 ```sh
 GNR_DAEMON_PROVIDER=genropy-kajenn KAJENN_ORCHESTRATION_PROFILES=1 \
-PGGSSENCMODE=disable genropy-kajenn test_invoice_pg -p 8091
+PGGSSENCMODE=disable gnrkajenn test_invoice_pg -p 8091
 ```
 
 Startup: template process built the site, forked `pool_0001`, uvicorn on

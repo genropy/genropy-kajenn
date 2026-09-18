@@ -287,7 +287,7 @@ who is connected, which pages exist, who is logged in, what datachanges to push.
 register was a separate process on a wire (Pyro4, then the genro-nodaemon TCP daemon): one more
 thing to launch, to keep alive, to debug when it hangs.</p>
 
-<p>genropy-kajenn removes both walls with one command. <code class="il">genropy-kajenn</code> runs your
+<p>genropy-kajenn removes both walls with one command. <code class="il">gnrkajenn</code> runs your
 unmodified site on uvicorn (ASGI). Add <code class="il">--workers N</code> and the same command
 spreads it over a supervised pool of processes, each user pinned to a stable worker. And there is
 no daemon: the register is answered in-process.</p>
@@ -347,7 +347,7 @@ itself. That is the whole trick, and it is why development and production behave
 <h3>What you actually get</h3>
 
 <div class="cards">
-  <div class="card"><h4>Drop-in for gnrwsgiserve</h4><p>Same instance name, unmodified code. <code class="il">genropy-kajenn mysite</code> and you are on uvicorn.</p></div>
+  <div class="card"><h4>Drop-in for gnrwsgiserve</h4><p>Same instance name, unmodified code. <code class="il">gnrkajenn mysite</code> and you are on uvicorn.</p></div>
   <div class="card"><h4>Scale across processes</h4><p><code class="il">--workers N</code> turns the same command into a front plus a pool of worker subprocesses that grows under load. No external balancer.</p></div>
   <div class="card"><h4>No register daemon</h4><p>The register is answered in-process by <code class="il">GenropyRegisterClient</code>. Nothing to start, connect to, or keep alive. This replaces genro-nodaemon.</p></div>
   <div class="card"><h4>Sticky per user</h4><p>Each user returns to the same worker, so the session state living in that worker's register stays coherent &mdash; no shared session store to configure.</p></div>
@@ -408,15 +408,15 @@ PostgreSQL site).</p>
 
 <h3>Serve your site</h3>
 
-<pre><code>genropy-kajenn mysite
+<pre><code>gnrkajenn mysite
 <span class="cmt"># → http://127.0.0.1:8000/index  (the built-in defaults)</span></code></pre>
 
 <p>That is the drop-in. Common options:</p>
 
-<pre><code>genropy-kajenn mysite -p 9000                 <span class="cmt"># another port</span>
-genropy-kajenn mysite -H 0.0.0.0 -p 9000      <span class="cmt"># reachable from outside</span>
-genropy-kajenn mysite --nodebug               <span class="cmt"># debug off</span>
-genropy-kajenn mysite --workers 2             <span class="cmt"># a pool of 2 worker subprocesses</span></code></pre>
+<pre><code>gnrkajenn mysite -p 9000                 <span class="cmt"># another port</span>
+gnrkajenn mysite -H 0.0.0.0 -p 9000      <span class="cmt"># reachable from outside</span>
+gnrkajenn mysite --nodebug               <span class="cmt"># debug off</span>
+gnrkajenn mysite --workers 2             <span class="cmt"># a pool of 2 worker subprocesses</span></code></pre>
 
 <div class="callout warn">
   <p><code class="il">--reload</code> is accepted for surface compatibility with
@@ -490,7 +490,7 @@ nothing to write by hand:</p>
 <strong>only</strong> one of those files the repository actually tracks.</p>
 
 <div class="callout warn">
-  <p><strong>The site folder is not versioned.</strong> <code class="il">genropy-kajenn</code> resolves
+  <p><strong>The site folder is not versioned.</strong> <code class="il">gnrkajenn</code> resolves
   a <em>site</em>, not an instance (<code class="il">PathResolver.site_name_to_path</code>), and it
   looks in two places, in this order: <code class="il">&lt;projects&gt;/*/sites/&lt;name&gt;/</code>
   first, then <code class="il">&lt;projects&gt;/*/instances/&lt;name&gt;/</code> — but the second only
@@ -555,7 +555,7 @@ for a bench, obviously not for anything reachable from outside your machine.</p>
 
 <h3>4. Run it — single process</h3>
 
-<pre><code>genropy-kajenn test_invoice_pg -p 8098 --nodebug</code></pre>
+<pre><code>gnrkajenn test_invoice_pg -p 8098 --nodebug</code></pre>
 
 <p>Open <code class="il">http://127.0.0.1:8098/index</code> and log in as any name from
 <code class="il">usernames.txt</code> with password <code class="il">a</code>. It is the same site
@@ -563,7 +563,7 @@ you would get from <code class="il">gnrwsgiserve</code> &mdash; that is the poin
 
 <h3>5. Run it — a pool of two workers</h3>
 
-<pre><code>genropy-kajenn test_invoice_pg -p 8098 --workers 2 --nodebug</code></pre>
+<pre><code>gnrkajenn test_invoice_pg -p 8098 --workers 2 --nodebug</code></pre>
 
 <p>Now the front supervises two worker subprocesses and they announce themselves over a unix-domain
 socket. In the log you will see one line per worker:</p>
@@ -619,7 +619,7 @@ PORT = <span class="fn">int</span>(os.environ.get(<span class="str">"KAJENN_PORT
 export GENRO_STORAGE_KEY=$(python3 -c "from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())")
 export GNR_ADMIN_PASSWORD=&lt;choose one&gt;
 
-genropy-kajenn test_invoice_pg --config monitor_config.py -p 8098</code></pre>
+gnrkajenn test_invoice_pg --config monitor_config.py -p 8098</code></pre>
 
 <p>Then open <code class="il">http://127.0.0.1:8098/_server/login_page</code> in the browser, sign in
 as <code class="il">admin</code> with that password, and go to
@@ -657,7 +657,7 @@ script from inside that directory &mdash; they open their data files by relative
 
 <table>
   <tr><th></th><th>Single</th><th>Pool</th></tr>
-  <tr><td>Launch</td><td><code class="il">genropy-kajenn mysite</code></td><td><code class="il">genropy-kajenn mysite --workers N</code></td></tr>
+  <tr><td>Launch</td><td><code class="il">gnrkajenn mysite</code></td><td><code class="il">gnrkajenn mysite --workers N</code></td></tr>
   <tr><td>Configuration</td><td><code class="il">workers=0, local_worker=True</code></td><td><code class="il">workers=N, local_worker=False</code></td></tr>
   <tr><td>Processes</td><td>one (front + its worker inside it)</td><td>one front + N worker subprocesses</td></tr>
   <tr><td>Routing</td><td>one worker, nothing to choose</td><td>sticky per user (<code class="il">sticky_cid</code> cookie)</td></tr>
@@ -1001,7 +1001,7 @@ UI &mdash; with the user's session already authenticated.</p>
 
 <h2>Config &amp; CLI</h2>
 
-<h3>Every genropy-kajenn option</h3>
+<h3>Every gnrkajenn option</h3>
 
 <table>
   <tr><th>Option</th><th>Default</th><th>What it does</th></tr>
@@ -1067,7 +1067,7 @@ PORT = <span class="fn">int</span>(os.environ.get(<span class="str">"KAJENN_PORT
 
 <p>Launch it either way &mdash; the config brings the shape, the CLI instance wins:</p>
 
-<pre><code>genropy-kajenn mysite --config pool_config.py -p 8081
+<pre><code>gnrkajenn mysite --config pool_config.py -p 8081
 python -m kajenn serve pool_config.py</code></pre>
 
 <div class="callout">
@@ -1090,10 +1090,10 @@ python -m kajenn serve pool_config.py</code></pre>
 
 <table>
   <tr><th>I want to&hellip;</th><th>Do this</th></tr>
-  <tr><td>Serve my site (drop-in for gnrwsgiserve)</td><td><code class="il">genropy-kajenn mysite</code></td></tr>
-  <tr><td>Pick host and port</td><td><code class="il">genropy-kajenn mysite -H 127.0.0.1 -p 9000</code></td></tr>
-  <tr><td>Run a pool of 3 workers</td><td><code class="il">genropy-kajenn mysite --workers 3</code></td></tr>
-  <tr><td>Serve the bench site with its 32 known accounts</td><td><code class="il">genropy-kajenn test_invoice_pg -p 8098</code> after <code class="il">psql -f set_pwd_a.sql</code> &mdash; see <em>Try It</em></td></tr>
+  <tr><td>Serve my site (drop-in for gnrwsgiserve)</td><td><code class="il">gnrkajenn mysite</code></td></tr>
+  <tr><td>Pick host and port</td><td><code class="il">gnrkajenn mysite -H 127.0.0.1 -p 9000</code></td></tr>
+  <tr><td>Run a pool of 3 workers</td><td><code class="il">gnrkajenn mysite --workers 3</code></td></tr>
+  <tr><td>Serve the bench site with its 32 known accounts</td><td><code class="il">gnrkajenn test_invoice_pg -p 8098</code> after <code class="il">psql -f set_pwd_a.sql</code> &mdash; see <em>Try It</em></td></tr>
   <tr><td>Create the site folder the repository does not carry</td><td>Drop a <code class="il">root.py</code> in <code class="il">instances/&lt;name&gt;/</code> — see <em>Try It</em></td></tr>
   <tr><td>Tune the occupancy thresholds</td><td>Write a config (<code class="il">reception_threshold</code>, <code class="il">admission_threshold</code>), launch with <code class="il">--config</code></td></tr>
   <tr><td>Read the site counters</td><td><code class="il">curl -s .../metrics</code></td></tr>
@@ -1110,7 +1110,7 @@ python -m kajenn serve pool_config.py</code></pre>
 
 <table>
   <tr><th>Name</th><th>Role</th></tr>
-  <tr><td><code class="il">genropy-kajenn</code></td><td>The CLI. Resolves the instance, writes the environment, starts the server.</td></tr>
+  <tr><td><code class="il">gnrkajenn</code></td><td>The CLI. Resolves the instance, writes the environment, starts the server.</td></tr>
   <tr><td><code class="il">GenropySpaApplication</code></td><td>The one application: the front that routes, and the host of the worker(s). Single and pool are this class under different configuration. It also serves <code class="il">/metrics</code>.</td></tr>
   <tr><td><code class="il">GenropyWorker</code></td><td>The worker role: hosts a <code class="il">GnrWsgiSite</code> and runs its synchronous calls in a thread executor.</td></tr>
   <tr><td><code class="il">GenropyRegisterClient</code></td><td>The in-process, daemonless register the legacy talks to through <code class="il">site.register</code>.</td></tr>

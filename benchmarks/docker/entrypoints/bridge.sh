@@ -7,6 +7,6 @@ set -e
 # read-only: install from a throwaway copy instead.
 uv pip install --system --quiet /src/kajenn /src/genropy-kajenn
 if [ -n "${KAJENN_POOL_RECIPE:-}" ]; then
-  exec genropy-kajenn bridge_lab -H 0.0.0.0 -p 8098 --nodebug --config "$KAJENN_POOL_RECIPE"
+  exec gnrkajenn bridge_lab -H 0.0.0.0 -p 8098 --nodebug --config "$KAJENN_POOL_RECIPE"
 fi
-exec genropy-kajenn bridge_lab -H 0.0.0.0 -p 8098 --nodebug
+exec gnrkajenn bridge_lab -H 0.0.0.0 -p 8098 --nodebug

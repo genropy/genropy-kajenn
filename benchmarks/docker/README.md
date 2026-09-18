@@ -8,7 +8,7 @@ source trees, not only on the machine they were born on.
 |---|---|---|
 | `postgres` | PostgreSQL 17, two databases: `test_invoice_pg` (from the dump) and `test_invoice_bridge` (template copy) | — |
 | `legacy` | the classic stack, whole: `gnrdaemon` + gunicorn (`LEGACY_WORKERS`, default 1) | 8099 |
-| `bridge` | `genropy-kajenn` with the SPA pool, inspector on (`/_server/inspector/census`) | 8098 |
+| `bridge` | `gnrkajenn` with the SPA pool, inspector on (`/_server/inspector/census`) | 8098 |
 | `bench` | the driver (profile `bench`, run on demand) | — |
 
 ## Local validation and measurement campaigns
@@ -92,7 +92,7 @@ runtime material, gitignored like `runtime/`.
   package folder, not the package folder itself.
 - The site resolver accepts an instance as a site only if `root.py` sits next
   to `instanceconfig.xml`.
-- `genropy-kajenn` must bind `-H 0.0.0.0` or the published port answers nothing.
+- `gnrkajenn` must bind `-H 0.0.0.0` or the published port answers nothing.
 - First bridge boot in the container: the first worker births can fail their
   fork dialogue and the pool retries until one lands (~2 minutes worst seen).
   Under observation — container-only, first boot only.

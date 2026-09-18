@@ -32,7 +32,7 @@ the gate. It is the read door the page-class-cache certification uses, and it is
 NOT in the measured path: the front's demux diverts ``_console`` on the first
 path segment, before the hosted site.
 
-Used by ``genropy-kajenn <instance> --config <this file>``.
+Used by ``gnrkajenn <instance> --config <this file>``.
 """
 
 import os

@@ -229,7 +229,7 @@ bridge_processes, _, _, _ = ContainerProbe("nessun-container", bridge).parse(tab
     process_line("31", "14", "python -m kajenn.spa.template_entry"),
     process_line("32", "14", "python -m kajenn.spa.template_entry"),
     process_line("9001", "999", FOREIGN_CMD)))
-check("il commander e' il processo genropy-kajenn", bridge_processes["1"]["role"], "commander")
+check("il commander e' il processo gnrkajenn", bridge_processes["1"]["role"], "commander")
 check("il template e' il figlio dell'init", bridge_processes["14"]["role"], "template")
 check("i worker del pool prendono il nome dal census",
       [bridge_processes["31"]["role"], bridge_processes["32"]["role"]],

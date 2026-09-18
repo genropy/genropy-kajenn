@@ -11,7 +11,7 @@ Do I have to change my site?
    sessions. genropy-kajenn changes how the site is served, not what it is.
 
 How is this different from ``gnrwsgiserve``?
-   ``gnrwsgiserve`` runs the site under werkzeug (WSGI); ``genropy-kajenn`` runs it
+   ``gnrwsgiserve`` runs the site under werkzeug (WSGI); ``gnrkajenn`` runs it
    under uvicorn (ASGI), converting each request to WSGI on a thread pool so the
    site code stays synchronous. What you gain is the worker pool with its
    user-sticky routing, and no register daemon. The command-line experience is

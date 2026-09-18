@@ -34,13 +34,13 @@ Install it
 
    $ pip install genropy-kajenn
 
-That installs the ``genropy-kajenn`` command and declares the ``gnr.web:daemon``
+That installs the ``gnrkajenn`` command and declares the ``gnr.web:daemon``
 entry point — the in-process register. Nothing else to configure, and no daemon
 to start.
 
 The entry point is **not** picked up on its own. genropy replaces its daemon
 namespace only when ``GNR_DAEMON_PROVIDER`` names a provider, and
-``genropy-kajenn`` sets it for its own process before anything imports the site
+``gnrkajenn`` sets it for its own process before anything imports the site
 machinery. Consequence worth knowing: the classic stack and this one can share
 one virtualenv, because the choice is made per process and not per installation.
 
@@ -62,7 +62,7 @@ Serve your site
 
 .. code-block:: console
 
-   $ genropy-kajenn mysite
+   $ gnrkajenn mysite
    → site on http://127.0.0.1:8000/index
 
 ``mysite`` is the genropy instance name — the same you pass to ``gnrwsgiserve``
@@ -72,14 +72,14 @@ Change host and port:
 
 .. code-block:: console
 
-   $ genropy-kajenn mysite -p 9000                # a different port
-   $ genropy-kajenn mysite -H 0.0.0.0 -p 9000     # host + port
+   $ gnrkajenn mysite -p 9000                # a different port
+   $ gnrkajenn mysite -H 0.0.0.0 -p 9000     # host + port
 
 Turn debug off:
 
 .. code-block:: console
 
-   $ genropy-kajenn mysite --nodebug
+   $ gnrkajenn mysite --nodebug
 
 .. note::
 
@@ -122,7 +122,7 @@ Next steps
 
 * :doc:`the-pool` — how the pool grows, where a user lives, what happens when he
   goes quiet.
-* :doc:`cli-reference` — every ``genropy-kajenn`` option.
+* :doc:`cli-reference` — every ``gnrkajenn`` option.
 * :doc:`configuration` — the environment variables, and when a config file earns
   its place.
 * :doc:`composition` — add a REST API, an MCP endpoint, or an async app beside

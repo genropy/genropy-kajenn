@@ -1,7 +1,7 @@
 API reference
 =============
 
-genropy-kajenn is normally driven through the ``genropy-kajenn`` command, not
+genropy-kajenn is normally driven through the ``gnrkajenn`` command, not
 imported. This page documents the classes for the cases where you embed the
 bridge in your own server or extend it.
 

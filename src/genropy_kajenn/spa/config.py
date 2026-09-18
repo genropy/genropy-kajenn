@@ -3,7 +3,7 @@
 
 """Standard kajenn configuration for serving one genropy instance as a SPA.
 
-Used by the ``genropy-kajenn`` CLI: a normal multi-app ``AsgiServer`` on which the
+Used by the ``gnrkajenn`` CLI: a normal multi-app ``AsgiServer`` on which the
 genropy instance is mounted on the root. The variable elements (the resolved
 instance ``path``, host/port/debug, the installation paths, the idle valve)
 come from the environment; the rest of the recipe is fixed. No register daemon

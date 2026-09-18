@@ -25,10 +25,10 @@ Knobs (constructor kwargs of the front, peeled by it onto the pool):
                          (env; None lets the front derive it from the host RAM)
 
 Run either way:
-    genropy-kajenn <instance> --config examples/multiworker_config.py -p 8081
+    gnrkajenn <instance> --config examples/multiworker_config.py -p 8081
     python -m kajenn serve examples/multiworker_config.py
 
-Through the ``genropy-kajenn`` CLI the instance/host/port come from the CLI (they win over the
+Through the ``gnrkajenn`` CLI the instance/host/port come from the CLI (they win over the
 defaults below, read from the environment); run directly it falls back to the defaults. The
 front mounts itself on the site root — a genropy site owns its absolute URLs — and every
 worker hosts the site with its register in-process, no daemon.

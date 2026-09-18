@@ -38,7 +38,7 @@ in the developer's pyenv, and `GENRO_KJNFOLDER` points at the configuration that
 names the pinned resources and packages. Both are read at import time, so they
 belong on the command line and not in this launcher.
 
-Every argument is the ``genropy-kajenn`` command line: this launcher adds only
+Every argument is the ``gnrkajenn`` command line: this launcher adds only
 ``--config``, and refuses to override one the caller named. The archive lands
 in ``GNR_BENCH_ARCHIVE_DIR``, or in ``~/genro_bench/runs/`` when that is unset —
 the same place the legacy runs go, so the two references sit side by side.

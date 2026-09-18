@@ -8,7 +8,7 @@ Pool internals
    ``KAJENN_WORKERS``), all removed by the ``bridge-rebase-new-core``
    workflow: the pool always runs, born from the recipe in
    ``genropy_kajenn/spa/config.py``, sized by the core's ``worker_max_number``.
-   Until this page is rewritten, trust ``genropy-kajenn --help`` and
+   Until this page is rewritten, trust ``gnrkajenn --help`` and
    ``spa/config.py`` — not what follows.
 
 

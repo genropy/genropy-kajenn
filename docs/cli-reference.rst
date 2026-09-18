@@ -1,7 +1,7 @@
-CLI reference — ``genropy-kajenn``
+CLI reference — ``gnrkajenn``
 ================================
 
-``genropy-kajenn`` is the ASGI replacement for ``gnrwsgiserve``. It resolves a
+``gnrkajenn`` is the ASGI replacement for ``gnrwsgiserve``. It resolves a
 genropy instance name to its path and starts a kajenn ``AsgiServer`` hosting
 the site, with the pool already running.
 
@@ -10,7 +10,7 @@ Synopsis
 
 .. code-block:: console
 
-   genropy-kajenn <instance> [-H HOST] [-p PORT] [--nodebug] [--fulldebug]
+   gnrkajenn <instance> [-H HOST] [-p PORT] [--nodebug] [--fulldebug]
                            [--reload] [--config CONFIG]
 
 Options
@@ -70,8 +70,8 @@ Run from a config file
 
 .. code-block:: console
 
-   # through genropy-kajenn — the CLI instance/host/port win, the config brings the shape
-   $ genropy-kajenn mysite --config path/to/pool_config.py -p 8080
+   # through gnrkajenn — the CLI instance/host/port win, the config brings the shape
+   $ gnrkajenn mysite --config path/to/pool_config.py -p 8080
 
    # through the kajenn core CLI — the config supplies everything
    $ kajenn serve path/to/pool_config.py
