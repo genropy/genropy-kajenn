@@ -17,7 +17,7 @@ Date: 2026-09-08. Bridge HEAD `664dda96f6da7715af5eadbc993f3f0896c0c296`; candid
   ```sh
   env GENRO_KJNFOLDER="$PWD/temp/issue72-runtime/gnr" \
     PGGSSENCMODE=disable \
-    PYTHONPATH="$PWD/src:$PWD/../core/src:/Users/gporcari/Sviluppo/genropy/genropy/gnrpy" \
+    PYTHONPATH="$PWD/src:$PWD/../core/src:/path/to/genropy/gnrpy" \
     KAJENN_INSTANCE_DIR=/private/tmp/i72b664/i \
     KAJENN_FROZEN_USERS_PATH=/private/tmp/i72b664/f \
     .venv/bin/python -m genropy_kajenn.spa.cli test_invoice_pg -p 38172 --nodebug
@@ -47,7 +47,7 @@ After the diagnostic, the private site configuration was restored to ordinary HT
 ```sh
 env GENRO_KJNFOLDER="$PWD/temp/issue72-runtime/gnr" \
   PGGSSENCMODE=disable \
-  PYTHONPATH="$PWD/src:$PWD/../core/src:/Users/gporcari/Sviluppo/genropy/genropy/gnrpy" \
+  PYTHONPATH="$PWD/src:$PWD/../core/src:/path/to/genropy/gnrpy" \
   KAJENN_INSTANCE_DIR=/private/tmp/i72b664/i \
   KAJENN_FROZEN_USERS_PATH=/private/tmp/i72b664/f \
   .venv/bin/pytest -q

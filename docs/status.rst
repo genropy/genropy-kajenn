@@ -110,11 +110,6 @@ isolating one layer so a slowdown can be attributed instead of guessed.
 What is not there yet
 ---------------------
 
-**The release on core 0.41** — the predecessor's own open point, carried here
-verbatim: genropy-asgi ran against genro-asgi ``feat/59-genropy-machinery-out``
-while its published 0.5.0 pinned core 0.40. genropy-kajenn 0.1.0 pins
-``kajenn>=0.1.0`` and ``kajenn-orchestra>=0.1.0``, so the pin question is closed.
-
 **A per-worker view over HTTP** — the monitor renders the generic panel: the
 server, its sections and the mounted application. Which user sits on which
 worker lives in the commander and is readable through the console, not published

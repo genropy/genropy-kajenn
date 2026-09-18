@@ -45,6 +45,15 @@ def open_connections(site):
 
 
 @pytest.fixture(scope="module")
+def site_available():
+    """Skip when this machine cannot resolve the site: no genro configuration or no instance."""
+    try:
+        make_factory().build_site()
+    except Exception as exc:  # no ~/.gnr, no instance, no driver: skip, don't fail
+        pytest.skip(f"cannot resolve the {_SITE} site: {exc}")
+
+
+@pytest.fixture(scope="module")
 def engine():
     """One group engine, built as the template builds it; skip if the site cannot."""
     try:
@@ -74,7 +83,7 @@ def test_no_db_connection_is_left_open(engine):
     assert open_connections(engine) == []
 
 
-def test_the_engine_starts_no_thread():
+def test_the_engine_starts_no_thread(site_available):
     # The template refuses to fork when more than one thread is alive, so the
     # factory must leave the count where it found it. Absolute counts belong
     # to the runner, not to this code: what is asserted is the difference.
@@ -108,7 +117,7 @@ def test_a_worker_handed_an_engine_hosts_it_and_builds_nothing(engine):
         worker.exit_process()
 
 
-def test_a_worker_without_an_engine_builds_its_own():
+def test_a_worker_without_an_engine_builds_its_own(site_available):
     from kajenn_orchestra.orchestration import FreezeHandler
 
     from genropy_kajenn.spa.genropy_worker import GenropyWorker

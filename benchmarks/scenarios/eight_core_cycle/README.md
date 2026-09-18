@@ -92,7 +92,7 @@ LAB_DIR=/path/to/configured/lab \
 ```
 
 `LAB_DIR` must contain the Compose laboratory and its `.env`, including the
-mounted source trees. Point `GENROPY_ASGI_TREE` at the intended worktree.
+mounted source trees. Point `GENROPY_KAJENN_TREE` at the intended worktree.
 `PLAN_DIR` selects the certified-plan directory; `WORK_DIR` selects a fresh output
 directory. Defaults are `~/genro_bench/genropy-kajenn/plans/eight_core_cycle` and
 `~/genro_bench/genropy-kajenn/campaigns/<prefix>`. CPU and memory limits are passed

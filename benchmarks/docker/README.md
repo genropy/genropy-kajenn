@@ -18,7 +18,7 @@ and functional parity with Gunicorn. Reserve Hetzner for stress tests, saturatio
 and performance measurements. Local smoke timings are diagnostic output, not
 capacity measurements or evidence of a performance advantage.
 
-The selected bridge worktree must be explicit in `.env` (`GENROPY_ASGI_TREE`).
+The selected bridge worktree must be explicit in `.env` (`GENROPY_KAJENN_TREE`).
 Use fresh campaign output directories and an isolated database volume. Do not
 reinitialize an existing laboratory volume merely to refresh a smoke test.
 

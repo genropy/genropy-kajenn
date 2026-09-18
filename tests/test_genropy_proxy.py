@@ -110,7 +110,14 @@ class _DemoApi(RoutingClass):
 
 @pytest.mark.skipif(not _HAS_GNR, reason="genropy not installed")
 def test_e2e_real_gnrapp_closes_connection():
+    pytest.importorskip("psycopg2")
     from kajenn import AsgiServer
+    from genropy_kajenn.spa.site_engine_factory import GenropySiteEngineFactory
+
+    try:
+        GenropySiteEngineFactory(source=_INSTANCE, debug=False).build_site()
+    except Exception as exc:  # no ~/.gnr or no instance on this machine: skip, don't fail
+        pytest.skip(f"cannot resolve the {_INSTANCE} instance: {exc}")
 
     api = _DemoApi(None)
     server = AsgiServer(
