@@ -17,4 +17,6 @@ genropy-specific bridge on top of it. Three submodules, the only ``gnr.*``-aware
   ``gnr.web.daemon`` (entry-point ``gnr.web:daemon``), replacing the register daemon.
 """
 
-__version__ = "0.8.0"
+from importlib.metadata import version as _distribution_version
+
+__version__ = _distribution_version("genropy-kajenn")

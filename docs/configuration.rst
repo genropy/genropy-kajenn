@@ -52,7 +52,7 @@ Nothing else is read.
        that directory survives.
    * - ``KAJENN_INSTANCE_DIR``
      - path
-     - ``<system temp>/gnrasgi_<site key>``. Where the workers' unix sockets live.
+     - ``<system temp>/gnrkajenn_<site key>``. Where the workers' unix sockets live.
        Ephemeral, and under the temp directory because a unix socket path has to
        stay short.
    * - ``KAJENN_IDLE_FREEZE_MINUTES``
