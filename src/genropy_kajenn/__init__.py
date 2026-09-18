@@ -1,0 +1,20 @@
+# Copyright 2025 Softwell S.r.l.
+# Licensed under the Apache License, Version 2.0
+
+"""genropy-kajenn — the bridge between kajenn and legacy genropy.
+
+The generic commander/worker model lives in kajenn core
+(``kajenn.applications.multi_worker_application``); this package is the
+genropy-specific bridge on top of it. Three submodules, the only ``gnr.*``-aware code:
+
+- ``genropy_kajenn.spa`` — the SPA bridge: ``GenropySpaApplication`` (the front on
+  the core ``SpaApplication``) whose pool workers are ``GenropyWorker`` instances
+  hosting a legacy ``GnrWsgiSite``, plus the ``genropy-kajenn`` CLI and the
+  in-process register client.
+- ``genropy_kajenn.proxy`` — the OpenAPI bridge: a ``GnrApp`` behind an
+  ``OpenApiApplication`` with thread-local db cleanup.
+- ``genropy_kajenn.siteregister`` — the daemonless register the legacy imports as
+  ``gnr.web.daemon`` (entry-point ``gnr.web:daemon``), replacing the register daemon.
+"""
+
+__version__ = "0.8.0"

@@ -1,0 +1,5 @@
+# Runtime may be a directory or a compatibility symlink to the external archive.
+runtime
+projects/lab_bench/instances/*/site/*
+!projects/lab_bench/instances/*/site/.gitkeep
+.env

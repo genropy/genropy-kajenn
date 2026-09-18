@@ -1,0 +1,69 @@
+API reference
+=============
+
+genropy-kajenn is normally driven through the ``genropy-kajenn`` command, not
+imported. This page documents the classes for the cases where you embed the
+bridge in your own server or extend it.
+
+The root package exports only ``__version__``; the useful classes live in the
+three submodules below.
+
+The SPA bridge
+--------------
+
+The classes that host a genropy ``GnrWsgiSite``.
+
+.. autoclass:: genropy_kajenn.spa.genropy_spa_application.GenropySpaApplication
+
+.. autoclass:: genropy_kajenn.spa.genropy_worker.GenropyWorker
+
+.. autoclass:: genropy_kajenn.spa.genropy_register.GenropyRegistry
+
+.. autoclass:: genropy_kajenn.spa.genropy_register.GenropyPageRow
+
+``GenropySpaApplication`` is the single front for both shapes: it is the core
+``SpaApplication`` (whose commander owns the user-sticky pool and the site-wide
+``/metrics`` endpoint), its ``commander_class`` is ``GenropySpaCommander`` and
+its ``worker_class`` points at ``GenropyWorker`` — the worker that hosts the
+site, in this process for the single and in each spawned child for a pool.
+
+The site's data plane
+---------------------
+
+Datachanges, table subscriptions and dbevents are the bridge's since
+genropy/genro-asgi#59: the vertex half is the desk on the commander, the worker half is the verbs
+the register client calls on ``GenropyWorker``. See
+``docs/internal/datachanges.md`` and ``docs/internal/dbevents.md``.
+
+.. autoclass:: genropy_kajenn.spa.genropy_spa_commander.GenropySpaCommander
+
+.. autoclass:: genropy_kajenn.spa.genropy_spa_commander.GenropyCommanderEnvelopeHandler
+
+.. autoclass:: genropy_kajenn.spa.delivery_desk.DeliveryDesk
+
+.. autoclass:: genropy_kajenn.spa.subscription_index.SubscriptionIndex
+
+.. autoclass:: genropy_kajenn.spa.genropy_worker.GenropyRequestSlot
+
+.. autoclass:: genropy_kajenn.spa.genropy_worker.DeliveryOrders
+
+The OpenAPI bridge
+------------------
+
+For exposing a genropy database behind an ``OpenApiApplication`` (REST/MCP),
+with thread-local db cleanup.
+
+.. autoclass:: genropy_kajenn.proxy.GenropyProxyMixin
+
+.. autoclass:: genropy_kajenn.proxy.GenropyProxyOpenApiApplication
+
+The daemonless register
+-----------------------
+
+The in-process register the legacy imports as ``gnr.web.daemon``. You do not
+instantiate this yourself — the ``GnrWsgiSite`` builds it at ``site.register``.
+
+.. autoclass:: genropy_kajenn.siteregister.GenropyRegisterClient
+
+``genropy_kajenn.siteregister.SiteRegisterClient`` is an alias of
+``GenropyRegisterClient`` — the name the legacy imports.
