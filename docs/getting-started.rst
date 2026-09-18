@@ -1,31 +1,34 @@
-Get started
-===========
+Getting started
+===============
 
-By the end of this page your existing genropy site is served over ASGI, with no
+By the end of this page an existing genropy site is served over ASGI, with no
 register daemon, and you know how to check that it is running.
 
-Check the prerequisites
------------------------
+What you need first
+-------------------
+
+genropy-kajenn serves a site; it does not create one. A **real genropy instance
+is required**, and everything below assumes you already have one working under
+``gnrwsgiserve``.
 
 * **Python** >= 3.11.
 * **A working genropy environment** — ``~/.gnr/environment.xml`` exists and
-  points at your genropy setup (the same file ``gnrwsgiserve`` needs).
-* **An existing site** — a directory with a ``root.py``, the same site you serve
-  with ``gnrwsgiserve``. genropy-kajenn runs your site; it does not create one.
-* **psycopg2**, if the site is on PostgreSQL (genropy's ``pgsql`` extra, or
-  ``psycopg2-binary``).
+  points at your genropy setup, the same file ``gnrwsgiserve`` reads.
+* **An existing site** — the same instance name you pass to ``gnrwsgiserve``, or
+  the path of a site directory.
+* **genropy itself**, installed in the same environment. It is a **runtime**
+  requirement: the worker builds a ``GnrWsgiSite`` and imports ``gnr.*`` when it
+  runs. It is deliberately not a declared dependency of this package, so
+  ``pip install genropy-kajenn`` does not install it.
+* **A database driver**, if the site needs one — the driver the site already
+  uses under ``gnrwsgiserve``.
 
 .. note::
 
-   **On macOS, export** ``PGGSSENCMODE=disable``. The workers of a group are
-   born by ``fork`` out of a template process, and libpq negotiating Kerberos
-   inside a forked child crashes it.
-
-.. note::
-
-   genropy is a **runtime** requirement: the worker runs a ``GnrWsgiSite`` and
-   imports ``gnr.*`` only at runtime, never as a build dependency. The only
-   Python build dependency is ``kajenn``, installed automatically.
+   **On macOS export** ``PGGSSENCMODE=disable``. The workers of a group are born
+   by ``fork`` out of a template process, and libpq negotiating Kerberos inside a
+   forked child crashes it. The end-to-end test of this repository sets it for
+   the same reason.
 
 Install it
 ----------
@@ -34,15 +37,15 @@ Install it
 
    $ pip install genropy-kajenn
 
-That installs the ``gnrkajenn`` command and declares the ``gnr.web:daemon``
-entry point — the in-process register. Nothing else to configure, and no daemon
-to start.
+``kajenn`` and ``kajenn-orchestra`` are installed with it. That gives you the
+``gnrkajenn`` command and the ``gnr.web:daemon`` entry point — the in-process
+register. There is nothing else to configure and no daemon to start.
 
 The entry point is **not** picked up on its own. genropy replaces its daemon
-namespace only when ``GNR_DAEMON_PROVIDER`` names a provider, and
-``gnrkajenn`` sets it for its own process before anything imports the site
-machinery. Consequence worth knowing: the classic stack and this one can share
-one virtualenv, because the choice is made per process and not per installation.
+namespace only when ``GNR_DAEMON_PROVIDER`` names a provider, and ``gnrkajenn``
+writes that variable for its own process before anything imports the site
+machinery. The consequence is worth knowing: the classic stack and this one can
+share one virtualenv, because the choice is per process.
 
 To follow current development, take the three packages from GitHub:
 
@@ -56,7 +59,37 @@ From a checkout, for development:
 
 .. code-block:: console
 
-   $ pip install -e .[dev]
+   $ pip install -e ".[dev]"
+
+Read the command
+----------------
+
+.. code-block:: console
+
+   $ gnrkajenn --help
+   usage: gnrkajenn [-h] [-H HOST] [-p PORT] [--reload] [--nodebug] [--fulldebug]
+                    [--config CONFIG]
+                    instance
+
+   positional arguments:
+     instance         genropy instance/site name (or path)
+
+   options:
+     -h, --help       show this help message and exit
+     -H, --host HOST
+     -p, --port PORT
+     --reload         accepted for surface compatibility; the core server has no
+                      reloader
+     --nodebug
+     --fulldebug      debug AND the werkzeug debugger: the error page with a
+                      traceback and a console that evaluates Python in the
+                      process. Debug alone gives the SQL counters and the
+                      developer's extras without that page
+     --config CONFIG  server config.py (a ServerConfiguration) instead of the
+                      built-in recipe; the config carries the pool shape while
+                      the CLI instance still wins
+
+Every option is described in :doc:`cli-reference`.
 
 Serve your site
 ---------------
@@ -64,17 +97,22 @@ Serve your site
 .. code-block:: console
 
    $ gnrkajenn mysite
-   → site on http://127.0.0.1:8000/index
 
-``mysite`` is the genropy instance name — the same you pass to ``gnrwsgiserve``
-— or a path to a site directory.
+``mysite`` is the genropy instance name — the same you pass to ``gnrwsgiserve`` —
+or a path to a site directory. A name is resolved through genropy's own
+``PathResolver``; an existing directory is used as it is.
+
+Without ``-H`` and ``-p`` the recipe binds ``127.0.0.1`` on port ``8000``, so the
+site answers on ``http://127.0.0.1:8000/``. What the terminal prints while it
+comes up is uvicorn's own startup logging plus the site's; this page does not
+transcribe it, because it depends on the site and on your logging configuration.
 
 Change host and port:
 
 .. code-block:: console
 
    $ gnrkajenn mysite -p 9000                # a different port
-   $ gnrkajenn mysite -H 0.0.0.0 -p 9000     # host + port
+   $ gnrkajenn mysite -H 0.0.0.0 -p 9000     # host and port
 
 Turn debug off:
 
@@ -85,47 +123,53 @@ Turn debug off:
 .. note::
 
    ``--reload`` is accepted for surface compatibility with ``gnrwsgiserve`` and
-   then ignored — it prints a line saying so. Restart the process to pick up
-   code changes.
+   then ignored: the command prints a line saying so. Restart the process to pick
+   up code changes.
 
 There is no ``--workers``. The pool always runs and sizes itself: it starts with
-one worker and adds another when no existing one has room for a newcomer. A
+one worker and another is born when none of the living ones admits a newcomer. A
 ``KAJENN_WORKERS`` still set in the environment is reported on startup and
 ignored. See :doc:`the-pool`.
 
-Verify it runs
---------------
+Check that it runs
+------------------
 
-Open ``http://<host>:<port>/index`` in a browser. The site behaves exactly as it
-does under ``gnrwsgiserve``.
+Open ``http://<host>:<port>/`` in a browser. The site behaves as it does under
+``gnrwsgiserve``.
 
-Read the site-wide counters — no authentication needed:
+Read the site-wide counters — no authentication, because the built-in recipe
+mounts no authentication at all:
 
 .. code-block:: console
 
    $ curl -s http://127.0.0.1:8000/metrics
+
+The answer is Prometheus exposition text. The population family is the one the
+legacy ``/metrics`` webtool exposes, kept identical so an existing scrape
+configuration keeps working, and it is followed by the commander's own event
+counters:
+
+.. code-block:: text
+
    genropy_site_counters{counter="users"} 2
    genropy_site_counters{counter="pages"} 2
    genropy_site_counters{counter="connections"} 2
+   genropy_site_events{event="requests_refused"} 0
 
-The metric name is the one the legacy ``/metrics`` webtool exposes, kept
-identical so an existing collector keeps working.
-
-**The live monitor** is served by kajenn at ``/_server/monitor/``. Every
-route under ``/_server`` is gated ``SERVER_ADMIN``, and the built-in recipe
-declares no administrator, so out of the box it answers ``401``. To open it,
-launch with a ``--config`` recipe that declares an
-``authentication.admin_password`` — plus a ``storage_key``, since the user store
-encrypts at rest — then sign in at ``/_server/login_page`` as ``admin``.
+The three population numbers are the exact sizes of the commander's own indexes —
+the whole pool's view, not one worker's. The ``genropy_site_events`` family is
+the commander's aggregate counters, and a counter appears only once it has been
+incremented, so the lines that follow depend on what the pool has done.
 
 Next steps
 ----------
 
+* :doc:`concepts` — the model in words: commander, pool, pinning, the register.
+* :doc:`architecture/overview` — the same thing in four diagrams.
 * :doc:`the-pool` — how the pool grows, where a user lives, what happens when he
   goes quiet.
 * :doc:`cli-reference` — every ``gnrkajenn`` option.
-* :doc:`configuration` — the environment variables, and when a config file earns
-  its place.
-* :doc:`composition` — add a REST API, an MCP endpoint, or an async app beside
-  the site.
-* :doc:`status` — what of all this is already built.
+* :doc:`configuration` — the environment variables, and when a config file of
+  your own earns its place.
+* :doc:`composition` — a REST surface, an MCP endpoint or an async app beside the
+  site.

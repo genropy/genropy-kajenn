@@ -1,24 +1,35 @@
 # genropy-kajenn
 
-Serve legacy (synchronous) **genropy** sites on an ASGI server — no register
-daemon. genropy-kajenn is the genropy-specific bridge on top of
-[kajenn](https://github.com/kajenn-org/kajenn) and
-[kajenn-orchestra](https://github.com/kajenn-org/kajenn-orchestra): kajenn is the
-ASGI server, kajenn-orchestra the commander/worker orchestration, and this
-package hosts an unmodified `GnrWsgiSite` on top of them, spreading its users
-over a supervised pool of worker processes, each user pinned to one of them.
+[![PyPI](https://img.shields.io/pypi/v/genropy-kajenn)](https://pypi.org/project/genropy-kajenn/)
+[![Tests](https://github.com/genropy/genropy-kajenn/actions/workflows/tests.yml/badge.svg?branch=main)](https://github.com/genropy/genropy-kajenn/actions/workflows/tests.yml)
+[![Codecov](https://codecov.io/gh/genropy/genropy-kajenn/branch/main/graph/badge.svg)](https://app.codecov.io/gh/genropy/genropy-kajenn)
+[![Documentation](https://readthedocs.org/projects/genropy-kajenn/badge/?version=latest)](https://genropy-kajenn.readthedocs.io/en/latest/)
+[![Python](https://img.shields.io/badge/python-3.11%2B-blue)](https://github.com/genropy/genropy-kajenn/blob/main/pyproject.toml)
+[![License](https://img.shields.io/badge/License-Apache%202.0-blue)](LICENSE)
 
-- **GitHub**: https://github.com/genropy/genropy-kajenn
-- **Version**: 0.1.0 · **Status**: Alpha
-- **Package**: `genropy-kajenn` (PyPI) · **import**: `genropy_kajenn`
-- **Python**: >= 3.11 · **License**: Apache-2.0
+*genropy legacy sites on kajenn: a commander in the server, a supervised pool of
+workers each hosting one site, users pinned to a worker, no register daemon.*
 
-## What it replaces
+genropy-kajenn serves an existing, synchronous **genropy** site on an ASGI
+server. It replaces two pieces of the legacy stack at once: `gnrwsgiserve`, the
+one-process werkzeug launcher, and `gnrdaemon`, the register daemon reached over
+a wire.
 
-- **`gnrwsgiserve`** (werkzeug/WSGI) → **`gnrkajenn`** (uvicorn/ASGI). Same
-  site, same options, unmodified code.
-- **The register daemon** (Pyro4, then `genro-nodaemon`) → an **in-process**
-  register. There is no daemon to start or connect to.
+One server process holds the front and the commander. Every worker is a process
+of its own hosting one unmodified `GnrWsgiSite`, born by `fork` out of a template
+process that builds that site once for the whole group. A user and all his pages
+live in one worker, and the `spa_connection_id` cookie — the connection id the
+site itself minted — is what sends every request of his back to it. A user who
+goes quiet is written to a freezer on disk and his worker gets the memory back;
+his next request wakes him wherever there is room.
+
+The site register is answered **in-process**. The package declares the
+`gnr.web:daemon` entry point, and genropy installs it as `gnr.web.daemon` only
+when `GNR_DAEMON_PROVIDER` names the provider — which the command does for its
+own process, so the classic stack and this one can share one virtualenv.
+
+Your site does not change: same `root.py`, same packages, same authentication,
+same pages.
 
 ## Installation
 
@@ -26,87 +37,48 @@ over a supervised pool of worker processes, each user pinned to one of them.
 pip install genropy-kajenn
 ```
 
-Latest development version, straight from GitHub:
-
-```bash
-pip install git+https://github.com/genropy/genropy-kajenn.git
-```
-
-`kajenn` and `kajenn-orchestra` are installed automatically. **genropy** must be present at runtime
-(the worker runs a `GnrWsgiSite`) and configured as usual (`~/.gnr/environment.xml`
-plus an existing site). genropy is not a declared dependency of this package.
+`kajenn` and `kajenn-orchestra` are installed with it. **genropy must be present
+at runtime** and configured as usual (`~/.gnr/environment.xml` plus an existing
+site); it is deliberately not a declared dependency of this package.
 
 ## Usage
 
 ```bash
 gnrkajenn mysite -p 8080
-# site on http://127.0.0.1:8080/index
 ```
 
 `mysite` is the genropy instance name — the same you pass to `gnrwsgiserve` — or
-a path to a site directory. That is the whole launch: there is no worker count
-to declare and no single/pool selector. The pool always runs, starts with one
-worker and adds another when the ones it has have no room for a newcomer.
+a path to a site directory. That is the whole launch: no worker count to declare
+and no single/pool selector. On macOS export `PGGSSENCMODE=disable`, because
+libpq negotiating Kerberos inside a forked child crashes it.
 
-On macOS export `PGGSSENCMODE=disable`: the workers are born by `fork` and libpq
-negotiating Kerberos inside a forked child crashes it.
-
-Watch the site-wide counters, no authentication needed:
+Site-wide counters, no authentication needed:
 
 ```bash
 curl -s http://127.0.0.1:8080/metrics
 ```
 
-## How it works
-
-A genropy site is synchronous WSGI. genropy-kajenn converts each ASGI request to a
-PEP 3333 environ and runs the site on a thread pool, so the event loop is never
-blocked. The site's register — connections, pages, sessions, datachanges,
-stores — is served **in-process**, not by a daemon: the package declares the
-`gnr.web:daemon` entry point, and genropy resolves its daemon namespace to it
-only when `GNR_DAEMON_PROVIDER` names the provider, which the CLI does for its
-own process. The choice is per process, so the classic stack and this one can
-share one virtualenv.
-
-- **Every user lives in one worker**, with all his pages. Routing is by identity:
-  the `spa_connection_id` cookie carries the connection id the site itself minted
-  while serving, and the commander knows whose it is.
-- **Workers are born by fork** out of a template process that builds the
-  `GnrWsgiSite` once for all of them, so starting one more costs a fork and not a
-  cold start.
-- **The pool sizes itself** on measured occupancy — the number of processes is a
-  reading, never a setting. `KAJENN_WORKER_MAX_USERS` caps how many users one
-  worker may hold.
-- **A quiet user is frozen** to disk and his worker gets the memory back; his
-  next request wakes him. A restart parks everybody the same way, so nobody is
-  logged out by it.
-- **Changes travel addressed**: what one page writes, or a table event, reaches
-  the pages that subscribed it, wherever they sit. The desk that files them and
-  the table index live in this package, on the bridge's commander
-  (genropy/genro-asgi#59). The legacy `globalStore()` is one master on the commander with no
-  replicas — a worker reads it with a call and writes it through an
-  all-or-nothing grant.
-
-See [`docs/`](docs/) for the pool, configuration, CLI reference, FAQ,
-troubleshooting — and [`docs/status.rst`](docs/status.rst) for what is built
-today.
-
 ## Documentation
 
-The documentation is built with Sphinx:
+<https://genropy-kajenn.readthedocs.io/en/latest/> — concepts, architecture with
+diagrams, the CLI, the configuration keys, the FAQ and troubleshooting. To build
+it locally see [`docs/building.md`](docs/building.md):
 
 ```bash
-pip install -e .[docs]
-cd docs && make html
-# open docs/_build/html/index.html
+pip install -e ".[docs]"
+sphinx-build -W --keep-going -b html docs docs/_build/html
 ```
+
+Underneath: [kajenn](https://kajenn.readthedocs.io/en/latest/) is the ASGI
+server, [kajenn-orchestra](https://kajenn-orchestra.readthedocs.io/en/latest/)
+the commander/worker orchestration.
 
 ## Development
 
 ```bash
-pip install -e .[dev]
+pip install -e ".[dev]"
 pytest tests/
-ruff check src/
+ruff check src/ tests/
 ```
 
 ## License
