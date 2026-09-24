@@ -59,6 +59,7 @@ gnrkajenn = "genropy_kajenn.spa.cli:main"
 # resolve to genropy_kajenn.siteregister — no register daemon. Replaces genro-nodaemon.
 [project.entry-points."gnr.web"]
 daemon = "genropy_kajenn.siteregister"
+websockethandler = "genropy_kajenn.websockethandler:WsgiWebSocketHandler"
 
 [project.urls]
 Homepage = "https://github.com/genropy/genropy-kajenn"
