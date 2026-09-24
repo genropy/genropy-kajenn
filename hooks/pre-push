@@ -3,11 +3,18 @@
 #
 # Install: cp hooks/pre-push .git/hooks/pre-push && chmod +x .git/hooks/pre-push
 # Skip:    SKIP_TESTS=1 git push   (use with caution, say why in the PR)
+#
+# The suite needs kajenn and kajenn-orchestra: the project's .venv has them,
+# a pytest found first on PATH may not.
 
 set -e
 if [ "$SKIP_TESTS" = "1" ]; then
     echo "SKIP_TESTS=1: skipping pre-push tests"
     exit 0
 fi
-echo "Running pre-push checks: pytest tests/"
-pytest tests/ -q
+PYTEST=pytest
+if [ -x .venv/bin/pytest ]; then
+    PYTEST=.venv/bin/pytest
+fi
+echo "Running pre-push checks: $PYTEST tests/"
+"$PYTEST" tests/ -q
