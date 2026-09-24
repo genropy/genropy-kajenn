@@ -15,7 +15,7 @@ log = logging.getLogger("genropy_kajenn.websocket")
 
 
 class WebSocketReceiver:
-    """Pass HTTP through; retain the probe route and adapt page RPC calls."""
+    """Pass HTTP through; adapt page RPC calls."""
 
     def __init__(self, application):
         self.application = application
@@ -29,28 +29,13 @@ class WebSocketReceiver:
             payload = from_tytx(environ["wsgi.input"].read(length).decode(), "json")
             if not page_id or not isinstance(payload, dict):
                 raise ValueError("a page and a call object are required")
-            if environ.get("PATH_INFO") != "/_websocket_receive":
-                rpc_environ = self.rpc_environ(environ, payload, page_id)
-                return self.rpc_response(rpc_environ, start_response)
-            method = payload.get("method")
-            if not isinstance(method, str) or not method or len(method) > 256:
-                raise ValueError("a method name is required")
-            parameters = payload.get("parameters", {})
-            if not isinstance(parameters, dict):
-                raise ValueError("parameters must be an object")
+            rpc_environ = self.rpc_environ(environ, payload, page_id)
         except (ValueError, TypeError, UnicodeError) as error:
-            status = "400 Bad Request"
-            result = {"error": str(error), "executed": False}
-        else:
-            log.info("WSK received page=%s method=%r parameter_names=%r pid=%s executed=false",
-                     page_id, method, sorted(parameters), os.getpid())
-            status = "200 OK"
-            result = {"received": True, "executed": False, "page_id": page_id,
-                      "method": method, "worker_pid": os.getpid()}
-        body = to_tytx(result, "json").encode()
-        start_response(status, [("Content-Type", "application/json"),
-                                ("Content-Length", str(len(body)))])
-        return [body]
+            body = to_tytx({"error": str(error), "executed": False}, "json").encode()
+            start_response("400 Bad Request", [("Content-Type", "application/json"),
+                                               ("Content-Length", str(len(body)))])
+            return [body]
+        return self.rpc_response(rpc_environ, start_response)
 
     def rpc_environ(self, environ, payload, page_id):
         """Translate a serialized legacy form without accepting another page ID."""

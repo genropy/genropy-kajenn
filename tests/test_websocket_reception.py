@@ -1,7 +1,7 @@
 # Copyright 2025 Softwell S.r.l.
 # Licensed under the Apache License, Version 2.0
 
-"""Reception-only worker boundary and optional live WSX round trips."""
+"""Worker boundary for WSK calls and the optional live channel checks."""
 
 import asyncio
 import io
@@ -17,35 +17,25 @@ from genropy_kajenn.spa.websocket_receiver import WebSocketReceiver
 class ReceptionTest(unittest.TestCase):
     def receive(self, payload, page_id="page"):
         def forbidden_dispatch(environ, start_response):
-            self.fail("WSK must not execute the legacy application")
+            self.fail("an invalid WSK call must not reach the legacy application")
 
         receiver = WebSocketReceiver(forbidden_dispatch)
         body = to_tytx(payload, "json").encode()
         environ = {"REQUEST_METHOD": "WSK", "genro.page_id": page_id,
-                   "PATH_INFO": "/_websocket_receive",
+                   "PATH_INFO": "/a/page",
                    "CONTENT_LENGTH": str(len(body)), "wsgi.input": io.BytesIO(body)}
         response = []
         chunks = receiver(environ, lambda status, headers: response.append(status))
         return response[0], from_tytx(b"".join(chunks).decode(), "json")
 
-    def test_receives_without_execution_or_logging_values(self):
-        with self.assertLogs("genropy_kajenn.websocket", level="INFO") as captured:
-            status, result = self.receive(
-                {"method": "probe", "parameters": {"value": "private-value"}})
-        self.assertEqual(status, "200 OK")
-        self.assertTrue(result["received"])
+    def test_a_call_that_is_not_an_object_is_refused(self):
+        status, result = self.receive([])
+        self.assertEqual(status, "400 Bad Request")
         self.assertFalse(result["executed"])
-        self.assertNotIn("private-value", " ".join(captured.output))
-
-    def test_invalid_calls(self):
-        for payload in ({}, {"method": "probe", "parameters": []}, []):
-            with self.subTest(payload=payload):
-                status, result = self.receive(payload)
-                self.assertEqual(status, "400 Bad Request")
-                self.assertFalse(result["executed"])
 
     def test_missing_page(self):
-        self.assertEqual(self.receive({"method": "probe"}, page_id=None)[0], "400 Bad Request")
+        self.assertEqual(self.receive({"form": "method=probe"}, page_id=None)[0],
+                         "400 Bad Request")
 
     def test_http_is_forwarded_unchanged(self):
         calls = []
@@ -67,14 +57,14 @@ class ReceptionTest(unittest.TestCase):
 @unittest.skipUnless(os.environ.get("GNR_WSX_TEST_URL"),
                      "set GNR_WSX_TEST_URL for the running test site")
 class LiveReceptionTest(unittest.TestCase):
-    def test_real_page_channel_and_calls(self):
+    def test_page_channel_ownership(self):
         import httpx
         from websockets.asyncio.client import connect
         from kajenn.wsx import WsxEnvelope
 
         base = os.environ["GNR_WSX_TEST_URL"].rstrip("/")
         with httpx.Client(base_url=base, timeout=30) as client:
-            page = client.get("/webpages/wsx_probe")
+            page = client.get("/webpages/wsx_rpc")
             page.raise_for_status()
             match = re.search(r"page_id:'([\w-]+)'", page.text)
             self.assertIsNotNone(match)
@@ -96,16 +86,6 @@ class LiveReceptionTest(unittest.TestCase):
                 opened = await call("open", "/_wsx/openchannel",
                                     {"parameters": {"sequential": True}})
                 self.assertEqual(opened.status, 200)
-                for index in range(2):
-                    answer = await call(str(index), "/_websocket_receive", {
-                        "method": "wsx_probe_must_not_execute", "parameters": {"sequence": index}})
-                    self.assertEqual(answer.status, 200)
-                    self.assertTrue(answer.data["received"])
-                    self.assertFalse(answer.data["executed"])
-                    self.assertEqual(answer.data["page_id"], page_id)
-                bad = await call("bad", "/_websocket_receive", {})
-                self.assertEqual(bad.status, 400)
-                self.assertFalse(bad.data["executed"])
 
         asyncio.run(exercise())
 

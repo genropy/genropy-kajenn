@@ -5,8 +5,23 @@ here with the code. Every count and every browser observation below belongs to
 that run; this repository's suite has not repeated the live parts.
 
 The reception milestone is complete. The next increment now executes ordinary
-page RPC through the same ephemeral-page lifecycle as HTTP. The explicit
-`/_websocket_receive` probe remains reception-only. HTTP continues unchanged.
+page RPC through the same ephemeral-page lifecycle as HTTP. HTTP continues unchanged.
+
+## The reception probe, removed on 2026-09-24
+
+The reception milestone (step 3 below) was verified through a diagnostic route,
+`/_websocket_receive`. `WebSocketReceiver` answered a WSK call on that path
+itself, without reaching the site: it checked for a page ID, a method name and a
+parameters object, and replied `received: true`, `executed: false`, with the page
+ID, the method and the worker PID. The page `tests/fixtures/wsx_probe.py` called
+it from the browser; its only rpc raised if the call ever reached the dispatcher.
+
+The route was removed before the bridge's first WSK merge (genropy/genropy-kajenn#1),
+together with `wsx_probe.py` and the tests that called it. Reasons: no client calls
+it once page RPC runs (step 4); it answered any page holding an open channel; it
+logged every call at INFO. Every WSK call now goes to the page's ordinary RPC path.
+The records below mention the route and the probe page as they were during the
+2026-09-09 session; they describe that session, not the current code.
 
 ## Plan and status
 
@@ -37,7 +52,7 @@ For Bag replies, the browser uses the existing RPC resultHandler on the original
 XML: existing result decoding, resource loading and datachanges handling are reused.
 JSON result mode is also accepted. Other modes are explicitly refused for now.
 
-The fixture `tests/fixtures/wsx_rpc.py`, installed beside wsx_probe, provides
+The fixture `tests/fixtures/wsx_rpc.py`, installed beside wsx_probe (since removed), provides
 `/webpages/wsx_rpc` with HTTP/WSK buttons. Its result contains an integer, date,
 decimal and a fresh invocation ID. A handled error followed by another call verifies
 recovery; constructor and method probes verify currentPage is clear before construction
@@ -71,9 +86,8 @@ including the old `registerNewPage` command. Its `client_module` selects
 The client uses the current origin and opens `/_wsx/openchannel` with the page ID.
 It now sends application calls to the page's ordinary RPC path. The core validates
 channel ownership and transports WSK to the worker. `WebSocketReceiver` wraps the
-worker's WSGI application and adapts these calls as described above. The explicit
-`/_websocket_receive` diagnostic route still returns `received`, `executed: false`,
-page ID, method and worker PID. Logs do not contain application parameter values.
+worker's WSGI application and adapts these calls as described above. Logs do not
+contain application parameter values.
 
 ## Verification performed on 2026-09-09
 
