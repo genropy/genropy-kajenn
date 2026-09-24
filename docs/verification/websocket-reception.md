@@ -167,3 +167,41 @@ request instances. The deliberate limits above remain applicable.
 This closes the exploratory iteration, not a release or a claim of full legacy
 WebSocket compatibility. The bridge and companion legacy changes are maintained in separate compatibility
 branches. Integration and release are tracked separately from this scope closure.
+
+
+## Live run after the probe removal — 2026-09-24
+
+Run on this repository, not on the predecessor. Bridge at `cbd5e64` (the head of
+genropy/genropy-kajenn#1 before its squash merge), genropy `origin/develop` at
+`54bfe1d1da`, which carries genropy/genropy#1396 (the websocket-provider selector)
+and genropy/genropy#1400 (the client closes a refused channel). PostgreSQL local.
+
+Result: `tests/test_websocket_reception.py`, `tests/test_websocket_rpc.py` and
+`tests/test_websocket_provider.py` → 12 passed, the two live tests included.
+
+Setup, as it was needed on that machine:
+
+- genropy `develop` in a detached worktree; its `gnrpy` goes on `PYTHONPATH`
+  ahead of the genropy installed in `.venv`.
+- `GNR_LOCAL_PROJECTS=<worktree>/projects`: `PathResolver` looks there before the
+  projects of `~/.gnr/environment.xml`. On `develop` the site is
+  `projects/test_invoice/instances/test_invoice_pg`, found through its `root.py`;
+  `GnrWsgiSite` resolves the site by name only, so passing a path to `gnrkajenn`
+  does not reach the worker.
+- `psycopg2-binary` in `.venv`: the site's database adapter. It is not a declared
+  dependency.
+- `tests/fixtures/wsx_rpc.py` copied to `<site>/webpages/wsx_rpc.py`: `/webpages/`
+  resolves to the site's `site_static_dir`, which for this site is the instance's
+  `site` folder.
+- No site configuration change: with `GNR_DAEMON_PROVIDER=genropy-kajenn` genropy
+  `develop` turns the site's WebSockets on by itself (#1396).
+
+```sh
+W=<genropy develop worktree>
+GNR_LOCAL_PROJECTS=$W/projects PYTHONPATH=$W/gnrpy GNR_DAEMON_PROVIDER=genropy-kajenn \
+PGGSSENCMODE=disable .venv/bin/gnrkajenn test_invoice_pg -p 18971 --nodebug
+
+GNR_WSX_TEST_URL=http://127.0.0.1:18971 PYTHONPATH=$W/gnrpy \
+.venv/bin/python -m pytest tests/test_websocket_reception.py \
+    tests/test_websocket_rpc.py tests/test_websocket_provider.py
+```
