@@ -65,7 +65,7 @@ class WebSocketReceiver:
         scheme = converted.get("wsgi.url_scheme", "http")
         converted["wsgi.url_scheme"] = {"ws": "http", "wss": "https"}.get(scheme, scheme)
         converted["genro.transport"] = "websocket"
-        log.info("WSK RPC page=%s method=%r pid=%s", page_id, method, os.getpid())
+        log.debug("WSK RPC page=%s method=%r pid=%s", page_id, method, os.getpid())
         return converted
 
     def rpc_response(self, environ, start_response):

@@ -9,7 +9,10 @@ import os
 import re
 import unittest
 
+import httpx
 from genro_tytx import from_tytx, to_tytx
+from kajenn.wsx import WsxEnvelope
+from websockets.asyncio.client import connect
 
 from genropy_kajenn.spa.websocket_receiver import WebSocketReceiver
 
@@ -58,10 +61,6 @@ class ReceptionTest(unittest.TestCase):
                      "set GNR_WSX_TEST_URL for the running test site")
 class LiveReceptionTest(unittest.TestCase):
     def test_page_channel_ownership(self):
-        import httpx
-        from websockets.asyncio.client import connect
-        from kajenn.wsx import WsxEnvelope
-
         base = os.environ["GNR_WSX_TEST_URL"].rstrip("/")
         with httpx.Client(base_url=base, timeout=30) as client:
             page = client.get("/webpages/wsx_rpc")

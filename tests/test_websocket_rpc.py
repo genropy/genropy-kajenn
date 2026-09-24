@@ -10,7 +10,11 @@ import re
 import unittest
 from urllib.parse import parse_qs, urlencode
 
+import httpx
 from genro_tytx import from_tytx, to_tytx
+from gnr.core.gnrbag import Bag
+from kajenn.wsx import WsxEnvelope
+from websockets.asyncio.client import connect
 
 from genropy_kajenn.spa.websocket_receiver import WebSocketReceiver
 
@@ -74,11 +78,6 @@ class RpcAdapterTest(unittest.TestCase):
 @unittest.skipUnless(os.environ.get("GNR_WSX_TEST_URL"), "requires a running test site")
 class LiveRpcTest(unittest.TestCase):
     def test_http_wsk_results_errors_and_fresh_pages(self):
-        import httpx
-        from websockets.asyncio.client import connect
-        from kajenn.wsx import WsxEnvelope
-        from gnr.core.gnrbag import Bag
-
         base = os.environ["GNR_WSX_TEST_URL"].rstrip("/")
         path = "/webpages/wsx_rpc"
         with httpx.Client(base_url=base, timeout=30) as client:
