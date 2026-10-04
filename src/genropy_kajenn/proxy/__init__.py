@@ -14,4 +14,4 @@ REST/OpenAPI comes from kajenn.
 from .genropy_proxy import GenropyProxyMixin, GenropyProxyOpenApiApplication
 
 __all__ = ["GenropyProxyMixin", "GenropyProxyOpenApiApplication"]
-__version__ = "0.1.0"
+__version__ = "0.1.1"
