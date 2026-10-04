@@ -102,18 +102,16 @@ Is it faster than ``gnrwsgiserve``?
    different execution modes may not be quoted.
 
 What state is this package in?
-   Version 0.1.0, classified ``Development Status :: 3 - Alpha`` in
+   Version 0.1.1, classified ``Development Status :: 3 - Alpha`` in
    ``pyproject.toml``. The serving path, the register, the data plane and the
    fork-born workers have dedicated tests; the launch recipe and the CLI are
    exercised by running the command, not by the suite. The modules of the old
    daemon surface — ``handler.py``, ``service.py``, ``processes.py`` — exist only
    so the imports resolve and raise when used.
 
-   .. admonition:: Under review
-      :class: warning
+   .. note::
 
-      The distribution is ``0.1.0`` but ``genropy_kajenn.__init__`` carries
-      ``__version__ = "0.8.0"``, and ``genropy_kajenn.spa`` carries
-      ``__version__ = "0.6.0"``. They are the predecessor's numbers. This
-      documentation reads the version from the installed distribution metadata
-      and never from those attributes.
+      ``genropy_kajenn.__version__`` and ``genropy_kajenn.spa.__version__`` read
+      the version from the installed distribution metadata.
+      ``genropy_kajenn.proxy.__version__`` is written by hand and follows the
+      distribution at each release.
