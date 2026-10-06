@@ -29,7 +29,7 @@ import time
 from pathlib import Path
 from typing import Any
 
-from kajenn.channel.frame import FrameStream
+from kajenn.kbus.frame import FrameStream
 from genro_tytx import to_tytx
 from gnr.core.gnrbag import Bag
 from kajenn_orchestra.orchestration import FreezeHandler, GroupHandler
