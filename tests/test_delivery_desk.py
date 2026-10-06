@@ -36,7 +36,7 @@ import pytest
 from genro_routes import RoutingClass, route
 from genro_tytx import from_tytx, to_tytx
 
-from kajenn.channel.frame import FrameStream
+from kajenn.kbus.frame import FrameStream
 from kajenn_orchestra.orchestration import FreezeHandler, GroupHandler, SpaWorker
 from kajenn_orchestra.orchestration.worker_handler import WorkerHandler
 

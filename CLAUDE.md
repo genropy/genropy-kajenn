@@ -9,8 +9,8 @@ coding style, mypy policy (advisory, never blocking), and all general policies.
 ## Project-Specific Context
 
 ### Current Status
-- **Development Status**: Alpha (`Development Status :: 3 - Alpha`)
-- **Version**: 0.1.0
+- **Development Status**: Beta (`Development Status :: 4 - Beta`)
+- **Version**: 0.2.0
 - **Python**: >= 3.11
 - **Build**: hatchling, src/ layout, `py.typed`
 - **Has Implementation Code**: Yes
