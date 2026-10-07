@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "genropy-kajenn"
-version = "0.2.0"
+version = "0.3.0"
 description = "Daemon-less commander/worker model serving genropy legacy sites on top of kajenn and kajenn-orchestra"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -26,8 +26,8 @@ classifiers = [
 ]
 
 dependencies = [
-    "kajenn>=0.2.0",
-    "kajenn-orchestra>=0.2.0",
+    "kajenn>=0.3.0",
+    "kajenn-orchestra>=0.3.0",
 ]
 
 [project.optional-dependencies]

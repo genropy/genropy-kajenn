@@ -102,7 +102,7 @@ Is it faster than ``gnrwsgiserve``?
    different execution modes may not be quoted.
 
 What state is this package in?
-   Version 0.2.0, classified ``Development Status :: 4 - Beta`` in
+   Version 0.3.0, classified ``Development Status :: 4 - Beta`` in
    ``pyproject.toml``. The serving path, the register, the data plane and the
    fork-born workers have dedicated tests; the launch recipe and the CLI are
    exercised by running the command, not by the suite. The modules of the old
