@@ -63,7 +63,7 @@ by name.
   `genropy_kajenn.siteregister`.
 - genropy replaces its own `gnr.web.daemon` with that module **only when the
   environment variable `GNR_DAEMON_PROVIDER` names the provider**. The gate exists
-  only in genropy `develop`: see {ref}`the genropy prerequisite <genropy-develop>`.
+  only in a genropy later than 26.9.29: see {ref}`the genropy prerequisite <genropy-develop>`.
 - `spa/cli.py` sets it: `DAEMON_PROVIDER = "genropy-kajenn"`, written with
   `os.environ.setdefault` before anything imports the site machinery.
 

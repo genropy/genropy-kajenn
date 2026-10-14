@@ -27,7 +27,7 @@ The site register is answered **in-process**. The package declares the
 `gnr.web:daemon` entry point, and genropy installs it as `gnr.web.daemon` only
 when `GNR_DAEMON_PROVIDER` names the provider — which the command does for its
 own process, so the classic stack and this one can share one virtualenv. That gate
-exists only in genropy `develop` (see Installation).
+needs a genropy later than 26.9.29 (see Installation).
 
 Your site does not change: same `root.py`, same packages, same authentication,
 same pages.
@@ -42,11 +42,12 @@ pip install genropy-kajenn
 at runtime** and configured as usual (`~/.gnr/environment.xml` plus an existing
 site); it is deliberately not a declared dependency of this package.
 
-**genropy must come from its `develop` branch.** genropy-kajenn needs genropy
+**genropy must be later than 26.9.29.** The genropy the site runs on must contain
 commits `9810aa4f1a` (the `GNR_DAEMON_PROVIDER` gate), `436c805006`
 (`websocketHandlerClass`, `gnrwebsocket_kajenn.js`) and `add8e38b8d` (the browser
 socket closed when its channel is refused). The latest PyPI release, genropy
-26.9.29 (tag `release-26.09.29`), contains none of them. Details:
+26.9.29 (tag `release-26.09.29`), contains none of them; until a release does,
+they exist only on the `develop` branch. Details:
 [genropy prerequisite](https://genropy-kajenn.readthedocs.io/en/latest/getting-started.html#genropy-develop).
 
 ## Usage

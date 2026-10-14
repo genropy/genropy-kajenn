@@ -19,8 +19,8 @@ is required**, and everything below assumes you already have one working under
 * **genropy itself**, installed in the same environment. It is a **runtime**
   requirement: the worker builds a ``GnrWsgiSite`` and imports ``gnr.*`` when it
   runs. It is deliberately not a declared dependency of this package, so
-  ``pip install genropy-kajenn`` does not install it. It must come from the
-  ``develop`` branch: see :ref:`the genropy prerequisite <genropy-develop>`.
+  ``pip install genropy-kajenn`` does not install it. It must be a genropy
+  later than 26.9.29: see :ref:`the genropy prerequisite <genropy-develop>`.
 * **A database driver**, if the site needs one — the driver the site already
   uses under ``gnrwsgiserve``.
 
@@ -28,8 +28,8 @@ is required**, and everything below assumes you already have one working under
 
 .. important::
 
-   **genropy from the** ``develop`` **branch.** genropy-kajenn needs three
-   genropy commits:
+   **genropy later than 26.9.29.** The genropy the site runs on must contain
+   three commits:
 
    * ``9810aa4f1a`` — the ``GNR_DAEMON_PROVIDER`` gate on the ``gnr.web.daemon``
      entry point;
@@ -37,8 +37,8 @@ is required**, and everything below assumes you already have one working under
    * ``add8e38b8d`` — the browser socket is closed when its channel is refused.
 
    The latest genropy release on PyPI, 26.9.29 (tag ``release-26.09.29``),
-   contains none of them. Today genropy must be installed from a checkout of
-   its ``develop`` branch (``pip install -e gnrpy`` inside the checkout).
+   contains none of them. Until a release contains them, they exist only on
+   the ``develop`` branch.
 
 .. note::
 
@@ -60,7 +60,7 @@ register. There is nothing else to configure and no daemon to start.
 
 The entry point is **not** picked up on its own. genropy replaces its daemon
 namespace only when ``GNR_DAEMON_PROVIDER`` names a provider — a gate that
-exists only in genropy ``develop`` (see :ref:`the genropy prerequisite <genropy-develop>`) — and ``gnrkajenn``
+needs a genropy later than 26.9.29 (see :ref:`the genropy prerequisite <genropy-develop>`) — and ``gnrkajenn``
 writes that variable for its own process before anything imports the site
 machinery. The consequence is worth knowing: the classic stack and this one can
 share one virtualenv, because the choice is per process.

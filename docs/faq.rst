@@ -31,7 +31,7 @@ What happened to the register daemon?
    or connect to. The package declares the ``gnr.web:daemon`` entry point, and
    genropy installs it as ``gnr.web.daemon`` when ``GNR_DAEMON_PROVIDER`` names
    it — which the CLI does for its own process. So the classic stack and this one
-   can share one virtualenv. The gate exists only in genropy ``develop``: see
+   can share one virtualenv. The gate needs a genropy later than 26.9.29: see
    :ref:`the genropy prerequisite <genropy-develop>`.
 
 Does a user always land on the same worker?
