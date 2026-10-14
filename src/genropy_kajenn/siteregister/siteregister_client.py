@@ -11,9 +11,9 @@ own body and a docstring saying who calls it and when. No ``__getattr__`` magic,
 per-string dispatch table: what the register serves is exactly the set of methods below.
 
 The register reaches its worker as ``site.spa_worker`` — a
-:class:`~genropy_kajenn.spa.genropy_worker.GenropyWorker`, the core ``UserStickyWorker``
+:class:`~genropy_kajenn.spa.genropy_worker.GenropyWorker`, the core ``SpaWorker``
 hosting this very site — and calls its op methods DIRECTLY: the ops are sync, take
-``dispatch_lock``, and the call runs on the worker's http_pool thread, where the CALL
+``dispatch_lock``, and the call runs on the worker's traffic_pool thread, where the CALL
 sinks are open by context copy. There is no fold, no event sink read from the environ:
 the op itself announces what it did on the CALL that caused it.
 

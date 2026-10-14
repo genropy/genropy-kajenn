@@ -26,7 +26,8 @@ his next request wakes him wherever there is room.
 The site register is answered **in-process**. The package declares the
 `gnr.web:daemon` entry point, and genropy installs it as `gnr.web.daemon` only
 when `GNR_DAEMON_PROVIDER` names the provider — which the command does for its
-own process, so the classic stack and this one can share one virtualenv.
+own process, so the classic stack and this one can share one virtualenv. That gate
+needs a genropy later than 26.9.29 (see Installation).
 
 Your site does not change: same `root.py`, same packages, same authentication,
 same pages.
@@ -40,6 +41,14 @@ pip install genropy-kajenn
 `kajenn` and `kajenn-orchestra` are installed with it. **genropy must be present
 at runtime** and configured as usual (`~/.gnr/environment.xml` plus an existing
 site); it is deliberately not a declared dependency of this package.
+
+**genropy must be later than 26.9.29.** The genropy the site runs on must contain
+commits `9810aa4f1a` (the `GNR_DAEMON_PROVIDER` gate), `436c805006`
+(`websocketHandlerClass`, `gnrwebsocket_kajenn.js`) and `add8e38b8d` (the browser
+socket closed when its channel is refused). The latest PyPI release, genropy
+26.9.29 (tag `release-26.09.29`), contains none of them; until a release does,
+they exist only on the `develop` branch. Details:
+[genropy prerequisite](https://genropy-kajenn.readthedocs.io/en/latest/getting-started.html#genropy-develop).
 
 ## Usage
 
@@ -94,7 +103,13 @@ The live tests host the `test_invoice_pg` instance of genropy and need:
   package;
 - a running PostgreSQL, reached with the libpq variables (`PGUSER`,
   `PGPASSWORD`, `PGHOST`);
-- the database built with `gnr app dbsetup test_invoice_pg`.
+- in the configuration folder, `instanceconfig/default.xml` (an empty
+  `<packages/>`) and `siteconfig/default.xml` (`<jslib dojo_version="11"
+  gnr_version="11"/>` plus `<resources><common/><js_libs/></resources>`);
+- in `environment.xml`, a `<static><js>` block with `dojo_11` at
+  `dojo_libs/dojo_11` (`cdn=""`) and `gnr_11` at `gnrjs/gnr_d11` of the checkout;
+- the database created with `createdb test_invoice_pg` and then built with
+  `gnr app dbsetup test_invoice_pg`.
 
 The suite skips only for genropy not installed, a database driver not installed,
 an opt-in variable not set (`BENCH_*`, `GNR_BENCH_*`, `GNR_WSX_TEST_URL`) and an

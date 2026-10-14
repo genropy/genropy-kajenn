@@ -55,8 +55,10 @@ the built page and check that every fence became an `<svg>` before publishing.
 Two directories under `docs/` are excluded by `exclude_patterns` and are not part
 of this documentation:
 
-- `docs/internal/` — working notes, every one of them headed
-  `🔴 DA REVISIONARE`. Two are written in Italian
+- `docs/internal/` — working notes. The five Markdown files carry the status
+  `🔴 DA REVISIONARE`; `architecture.rst`, `legacy_daemon_role.md`,
+  `performance_analysis.md`, `pool-internals.rst` and `step1_spawner_design.md`
+  open with a superseded banner. Two are written in Italian
   (`performance_analysis.md` and `step1_spawner_design.md`); the rest are in
   English. They are not translated and not published.
 - `docs/verification/` — the logs of live acceptance sessions, written as records
@@ -71,16 +73,6 @@ The [genropy-kajenn Read the Docs project](https://app.readthedocs.org/projects/
 exists and is connected to this repository; its default version is `latest`,
 built from `main`, and its configured documentation URL is
 <https://genropy-kajenn.readthedocs.io/en/latest/>.
-
-:::{admonition} Under review
-:class: warning
-
-**No build has ever succeeded.** The two builds of commit `e9d9cf7` — `latest`
-and `stable`, both on 2026-09-18 — were terminated at the 15-minute limit, and
-the documentation URL answers 404 until one of them passes. The cause was the
-`kajenn` mock described above, and it is fixed in this checkout; whether the
-remote build then passes has to be read on the project page, not inferred here.
-:::
 
 Check the remote build result before claiming an update is live. Build
 configuration is not evidence that a build was published.

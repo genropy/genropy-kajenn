@@ -78,11 +78,11 @@ Pool behaviour
 Observation
 -----------
 
-**``/_server/...`` answers 404**
-   The built-in recipe declares no ``_server`` application, and a server that
-   declares none exposes none. Use ``/metrics``, or write a ``--config`` recipe
-   that declares the ``_server`` application together with an administrator and a
-   storage key.
+**``/_server/monitor/...`` refuses the request**
+   kajenn mounts the ``_server`` application on every server, but the monitor
+   routes are gated ``SERVER_ADMIN`` and the server creates no user at boot. Use
+   ``/metrics``, or write a ``--config`` recipe that declares an administrator
+   and a storage key.
 
 **``/metrics`` shows fewer event lines than expected**
    ``genropy_site_events`` is a counter family: a counter appears only once it

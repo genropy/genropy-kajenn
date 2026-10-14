@@ -19,9 +19,26 @@ is required**, and everything below assumes you already have one working under
 * **genropy itself**, installed in the same environment. It is a **runtime**
   requirement: the worker builds a ``GnrWsgiSite`` and imports ``gnr.*`` when it
   runs. It is deliberately not a declared dependency of this package, so
-  ``pip install genropy-kajenn`` does not install it.
+  ``pip install genropy-kajenn`` does not install it. It must be a genropy
+  later than 26.9.29: see :ref:`the genropy prerequisite <genropy-develop>`.
 * **A database driver**, if the site needs one — the driver the site already
   uses under ``gnrwsgiserve``.
+
+.. _genropy-develop:
+
+.. important::
+
+   **genropy later than 26.9.29.** The genropy the site runs on must contain
+   three commits:
+
+   * ``9810aa4f1a`` — the ``GNR_DAEMON_PROVIDER`` gate on the ``gnr.web.daemon``
+     entry point;
+   * ``436c805006`` — ``websocketHandlerClass`` and ``gnrwebsocket_kajenn.js``;
+   * ``add8e38b8d`` — the browser socket is closed when its channel is refused.
+
+   The latest genropy release on PyPI, 26.9.29 (tag ``release-26.09.29``),
+   contains none of them. Until a release contains them, they exist only on
+   the ``develop`` branch.
 
 .. note::
 
@@ -42,7 +59,8 @@ Install it
 register. There is nothing else to configure and no daemon to start.
 
 The entry point is **not** picked up on its own. genropy replaces its daemon
-namespace only when ``GNR_DAEMON_PROVIDER`` names a provider, and ``gnrkajenn``
+namespace only when ``GNR_DAEMON_PROVIDER`` names a provider — a gate that
+needs a genropy later than 26.9.29 (see :ref:`the genropy prerequisite <genropy-develop>`) — and ``gnrkajenn``
 writes that variable for its own process before anything imports the site
 machinery. The consequence is worth knowing: the classic stack and this one can
 share one virtualenv, because the choice is per process.
@@ -154,7 +172,6 @@ counters:
    genropy_site_counters{counter="users"} 2
    genropy_site_counters{counter="pages"} 2
    genropy_site_counters{counter="connections"} 2
-   genropy_site_events{event="requests_refused"} 0
 
 The three population numbers are the exact sizes of the commander's own indexes —
 the whole pool's view, not one worker's. The ``genropy_site_events`` family is

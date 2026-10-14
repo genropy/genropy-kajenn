@@ -75,7 +75,7 @@ process: they reach the origin page's own collect alone.
 
 ## Current state
 
-What exists today on `feat/8-genropy-machinery-in`: everything above, exercised
+What exists today: everything above, exercised
 by `tests/test_dbevents.py`, `tests/test_slot_deposit.py`,
 `tests/test_subscribed_tables_broadcast.py`, `tests/test_desk_projection.py`,
 `tests/test_delivery_desk.py` and `tests/test_subscription_index.py`.

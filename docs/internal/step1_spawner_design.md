@@ -1,3 +1,5 @@
+> Superseded (2026-10-14): describes the pre-rebase shape; current code: the pool always runs, born from the recipe in `genropy_kajenn/spa/config.py`; `GenropySpaApplication` on `kajenn_orchestra.spa_app.SpaApplication`, `GenropySpaCommander` on `SpaCommander`, `GenropyWorker` on `SpaWorker`, register `genropy_kajenn.siteregister.GenropyRegisterClient`.
+
 # Step 1 — Spawner + sticky-per-user: ragionamento e ciclo di vita
 
 **Version**: 0.1.0

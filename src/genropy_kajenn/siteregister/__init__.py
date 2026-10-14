@@ -12,7 +12,8 @@ The register is served entirely in-process by ``GenropyRegisterClient`` (the SPA
 application's own registries/surface/mailbox). The ``handler`` / ``service`` /
 ``processes`` modules are fakes: they exist only so the ``gnr.web.daemon.*`` namespace
 resolves for the daemon-CLI / ``app.gnrdaemon`` paths (never reached in the request
-path), and raise if actually used — there is no daemon in this build.
+path). ``handler`` and ``service`` raise if actually used — there is no daemon in this
+build; ``processes`` is empty (``__all__ = []``) and raises nothing.
 """
 
 __all__ = ["GenropyRegisterClient", "SiteRegisterClient"]

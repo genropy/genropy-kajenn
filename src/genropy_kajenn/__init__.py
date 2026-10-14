@@ -3,13 +3,13 @@
 
 """genropy-kajenn — the bridge between kajenn and legacy genropy.
 
-The generic commander/worker model lives in kajenn core
-(``kajenn.applications.multi_worker_application``); this package is the
+The generic commander/worker model lives in kajenn-orchestra
+(``kajenn_orchestra.spa_app.SpaApplication``); this package is the
 genropy-specific bridge on top of it. Three submodules, the only ``gnr.*``-aware code:
 
 - ``genropy_kajenn.spa`` — the SPA bridge: ``GenropySpaApplication`` (the front on
-  the core ``SpaApplication``) whose pool workers are ``GenropyWorker`` instances
-  hosting a legacy ``GnrWsgiSite``, plus the ``gnrkajenn`` CLI and the
+  kajenn-orchestra's ``SpaApplication``) whose pool workers are ``GenropyWorker``
+  instances hosting a legacy ``GnrWsgiSite``, plus the ``gnrkajenn`` CLI and the
   in-process register client.
 - ``genropy_kajenn.proxy`` — the OpenAPI bridge: a ``GnrApp`` behind an
   ``OpenApiApplication`` with thread-local db cleanup.
