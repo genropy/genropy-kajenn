@@ -259,10 +259,7 @@ async def app():
 
     from gnr.app.pathresolver import PathResolver
 
-    try:
-        site_path = PathResolver().site_name_to_path(_SITE)
-    except Exception as exc:
-        pytest.skip(f"cannot resolve the {_SITE} site: {exc}")
+    site_path = PathResolver().site_name_to_path(_SITE)
     root = tempfile.mkdtemp(prefix="gnrspa_")
     os.environ["KAJENN_PATH"] = site_path
     os.environ["KAJENN_DEBUG"] = ""
@@ -270,10 +267,7 @@ async def app():
     os.environ["KAJENN_INSTANCE_DIR"] = f"{root}/i"
     server = AsgiServer(str(CONFIG))
     front = server.application_at("")
-    try:
-        await front.on_startup()
-    except Exception as exc:  # site missing or broken: skip, don't fail
-        pytest.skip(f"cannot start the {_SITE} pool: {exc}")
+    await front.on_startup()
     # Readiness: the reception may still be presenting itself on the wire;
     # a refusal at boot is the pool's polite 503, so the fixture retries the
     # first page until the child serves it (the cli e2e convention).

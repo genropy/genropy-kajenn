@@ -887,13 +887,14 @@ class GenropyWorker(SpaWorker):
 
     @property
     def pool_member(self) -> bool:
-        """Whether this worker serves in a pool — a spawned child on a real wire.
+        """Whether this worker serves in a pool — joined to its group's bus.
 
-        A worker with no wire attached is a bare test construction: it holds
+        A worker with no member attached is a bare test construction: it holds
         every row it ever made, so the per-table commit gate may answer from
-        its own subscription cache. A child on the wire holds only its share.
+        its own subscription cache. A worker joined to its group's bus holds
+        only its share.
         """
-        return self.stream is not None
+        return self.member is not None
 
     def drop_page(self, identity: str, page_id: str, cascade: bool = True) -> None:
         """Drop a page with the legacy ``cascade`` flag, then its disk with the row.

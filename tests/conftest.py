@@ -32,19 +32,18 @@ import importlib.util  # noqa: E402 - the environment above must be set first
 
 import pytest  # noqa: E402
 
+pytest_plugins = ["pytester"]
+
 _HAS_GNR = importlib.util.find_spec("gnr") is not None
 SITE = "test_invoice_pg"
 
 
 def _start_lane(sibling=None, worker_name=None):
-    from tests.lane import WORKER_NAME, start_site_lane
-
     if not _HAS_GNR:
         pytest.skip("genropy not installed")
-    try:
-        return start_site_lane(SITE, sibling=sibling, worker_name=worker_name or WORKER_NAME)
-    except Exception as exc:  # site missing or broken: skip, don't fail
-        pytest.skip(f"cannot start the {SITE} lane: {exc}")
+    from tests.lane import WORKER_NAME, start_site_lane
+
+    return start_site_lane(SITE, sibling=sibling, worker_name=worker_name or WORKER_NAME)
 
 
 @pytest.fixture(scope="session")

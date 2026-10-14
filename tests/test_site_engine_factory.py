@@ -46,20 +46,14 @@ def open_connections(site):
 
 @pytest.fixture(scope="module")
 def site_available():
-    """Skip when this machine cannot resolve the site: no genro configuration or no instance."""
-    try:
-        make_factory().build_site()
-    except Exception as exc:  # no ~/.gnr, no instance, no driver: skip, don't fail
-        pytest.skip(f"cannot resolve the {_SITE} site: {exc}")
+    """The site resolves on this machine: a documented prerequisite, failing when absent."""
+    make_factory().build_site()
 
 
 @pytest.fixture(scope="module")
 def engine():
-    """One group engine, built as the template builds it; skip if the site cannot."""
-    try:
-        instance = make_factory().build_group_engine()
-    except Exception as exc:  # site missing or broken: skip, don't fail
-        pytest.skip(f"cannot build the {_SITE} site: {exc}")
+    """One group engine, built as the template builds it."""
+    instance = make_factory().build_group_engine()
     yield instance
     instance.on_site_stop()
 

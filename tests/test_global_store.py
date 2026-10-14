@@ -42,10 +42,7 @@ THREAD_TIMEOUT = 30.0
 def store_lane():
     from tests.lane import start_site_lane
 
-    try:
-        instance = start_site_lane(_SITE, worker_name="store_0001")
-    except Exception as exc:  # site missing or broken: skip, don't fail
-        pytest.skip(f"cannot start the {_SITE} lane: {exc}")
+    instance = start_site_lane(_SITE, worker_name="store_0001")
     yield instance
     instance.stop()
 

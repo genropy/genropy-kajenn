@@ -3,8 +3,8 @@
 
 """End-to-end datachange scenarios against a real GnrWsgiSite on the NEW single.
 
-These REQUIRE genropy and the ``test_invoice_pg`` site; they skip cleanly when
-either is missing. No register daemon anywhere: the front is
+These REQUIRE genropy and the ``test_invoice_pg`` site; they skip when genropy
+is not installed and fail when the site is missing. No register daemon anywhere: the front is
 ``GenropySpaApplication`` (the core ``SpaApplication``) attached to the live
 lane of ``tests/lane.py`` — the GenropyWorker with its real handler and a real
 commander desk, all in this process so the register and the db stay
@@ -68,10 +68,7 @@ def lane():
     """The live lane: the GenropyWorker, its real handler, a real desk."""
     from tests.lane import start_site_lane
 
-    try:
-        instance = start_site_lane(_SITE)
-    except Exception as exc:  # site missing or broken: skip, don't fail
-        pytest.skip(f"cannot start the {_SITE} lane: {exc}")
+    instance = start_site_lane(_SITE)
     yield instance
     instance.stop()
 

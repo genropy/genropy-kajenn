@@ -36,11 +36,11 @@ import pytest
 from genro_routes import RoutingClass, route
 from genro_tytx import from_tytx, to_tytx
 
-from kajenn.kbus.frame import FrameStream
 from kajenn_orchestra.orchestration import FreezeHandler, GroupHandler, SpaWorker
 from kajenn_orchestra.orchestration.worker_handler import WorkerHandler
 
 from genropy_kajenn.spa.genropy_spa_commander import GenropySpaCommander
+from tests.bus_join import join_bus
 
 WORKER_NAME = "standard_0001"
 SUBSCRIBE_PATH = "/commander/delivery/subscribe_table"
@@ -93,7 +93,6 @@ class DeskLane:
         self.worker.worker_dispatcher.commander_orders.add_branches(
             [{"name": "delivery", "instance": self.filter_orders}]
         )
-        self._reader_task = None
 
     @property
     def desk(self):
@@ -102,23 +101,15 @@ class DeskLane:
     async def open(self) -> None:
         connector = self.worker_handler.connector
         await connector.start()
-        reader, writer = await asyncio.open_unix_connection(str(connector.socket_path))
-        self.worker.attach_stream(FrameStream(reader, writer))
+        await join_bus(self.worker, connector.url)
         await self.worker.send_presentation({})
-        self._reader_task = asyncio.create_task(self.worker.receive_frames())
         await connector.wait_connected()
         self.worker_handler.state = "running"
         self.worker.open_request_slot()
 
     async def close(self) -> None:
-        if self._reader_task is not None:
-            self._reader_task.cancel()
-            try:
-                await self._reader_task
-            except asyncio.CancelledError:
-                pass
         self.worker.exit_process()
-        await self.worker_handler.connector.stop()
+        self.worker_handler.connector.stop()
         self.group.worker_handler_map.pop(self.worker_name, None)
 
     async def subscribe(self, page_id: str, table: str, subscribe: bool = True) -> Any:

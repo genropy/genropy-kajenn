@@ -29,13 +29,13 @@ import time
 from pathlib import Path
 from typing import Any
 
-from kajenn.kbus.frame import FrameStream
 from genro_tytx import to_tytx
 from gnr.core.gnrbag import Bag
 from kajenn_orchestra.orchestration import FreezeHandler, GroupHandler
 from kajenn_orchestra.orchestration.worker_handler import WorkerHandler
 
 from genropy_kajenn.spa.genropy_spa_commander import GenropySpaCommander
+from tests.bus_join import join_bus
 from genropy_kajenn.spa.legacy_bag import LegacyBagCollector
 
 #: The name the lane's handler and worker share: short, because a UDS path is.
@@ -93,7 +93,6 @@ class SiteLane:
         self.worker: Any = None
         self.loop: asyncio.AbstractEventLoop | None = None
         self._loop_thread: threading.Thread | None = None
-        self._reader_task: asyncio.Task[None] | None = None
 
     @property
     def desk(self) -> Any:
@@ -101,7 +100,7 @@ class SiteLane:
         return self.commander.delivery_desk
 
     async def _open(self) -> None:
-        """Build the worker, bind the socket, present, put the read loop on the air."""
+        """Build the worker, join it to the group's bus, present."""
         from genropy_kajenn.spa.genropy_worker import GenropyWorker
 
         self.worker = GenropyWorker(
@@ -113,28 +112,20 @@ class SiteLane:
         )
         connector = self.worker_handler.connector
         await connector.start()
-        reader, writer = await asyncio.open_unix_connection(str(connector.socket_path))
-        self.worker.attach_stream(FrameStream(reader, writer))
+        await join_bus(self.worker, connector.url)
         # The test helpers receive the worker and need the lane back (the way
         # the e2e front is handed the lane): ``call_sink`` delivers through it.
         self.worker.lane = self
         await self.worker.send_presentation({})
-        self._reader_task = asyncio.create_task(self.worker.receive_frames())
         await connector.wait_connected()
         # The lane stands in for launch_process, so it performs its state
         # transition too: presented means running, and placement requires it.
         self.worker_handler.state = "running"
 
     async def _close(self) -> None:
-        if self._reader_task is not None:
-            self._reader_task.cancel()
-            try:
-                await self._reader_task
-            except asyncio.CancelledError:
-                pass
         if self.worker is not None:
             self.worker.exit_process()
-        await self.worker_handler.connector.stop()
+        self.worker_handler.connector.stop()
 
     def deliver_worker_events(self) -> None:
         """Send the desk what the verbs announced: the events of the pytest thread's slot.
