@@ -88,7 +88,8 @@ The live tests host the `test_invoice_pg` instance of genropy and need:
   `gnrcore/adm` package;
 - a genro configuration folder named by `GENRO_GNRFOLDER`, whose
   `environment.xml` points at that checkout (`gnrhome`, `projects`, `packages`,
-  `resources`, `webtools`);
+  `resources`, `webtools`); the folder itself must be called `gnr`, because
+  genropy reads its files under the folder's name (`gnr.environment_xml`);
 - a running PostgreSQL, reached with the libpq variables (`PGUSER`,
   `PGPASSWORD`, `PGHOST`);
 - the database built with `gnr app dbsetup test_invoice_pg`.

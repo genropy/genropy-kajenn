@@ -45,7 +45,7 @@ jobs:
       PGUSER: postgres
       PGPASSWORD: postgres
       PGGSSENCMODE: disable
-      GENRO_GNRFOLDER: ${{ github.workspace }}/gnrconfig
+      GENRO_GNRFOLDER: ${{ github.workspace }}/gnr
     steps:
       - uses: actions/checkout@v4
 
