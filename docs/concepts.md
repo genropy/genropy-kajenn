@@ -62,7 +62,8 @@ by name.
 - `pyproject.toml` declares the entry point `gnr.web:daemon` pointing at
   `genropy_kajenn.siteregister`.
 - genropy replaces its own `gnr.web.daemon` with that module **only when the
-  environment variable `GNR_DAEMON_PROVIDER` names the provider**.
+  environment variable `GNR_DAEMON_PROVIDER` names the provider**. The gate exists
+  only in genropy `develop`: see {ref}`the genropy prerequisite <genropy-develop>`.
 - `spa/cli.py` sets it: `DAEMON_PROVIDER = "genropy-kajenn"`, written with
   `os.environ.setdefault` before anything imports the site machinery.
 
@@ -72,7 +73,8 @@ process that declared the provider gets the in-process register.
 
 `siteregister/` also carries `handler.py`, `service.py`, `processes.py` and
 `siteregister.py`. They exist so that the `gnr.web.daemon.*` names the legacy
-imports resolve; nothing in the request path calls them, and using them raises.
+imports resolve; nothing in the request path calls them. Using `handler.py` or
+`service.py` raises; `processes.py` is empty (`__all__ = []`).
 
 ## The words
 

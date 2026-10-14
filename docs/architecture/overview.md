@@ -85,8 +85,10 @@ else is packed and handed to the commander, which resolves the
 adds one native route of its own, `metrics`, and the root mount.
 
 In the worker the core's http call form reaches `self.wsgi_app`, which
-`GenropyWorker.__init__` assigned: the `GnrWsgiSite` itself, or that site wrapped
-in `GnrDebuggedApplication` when `debugger` is set. The site runs synchronously
+`GenropyWorker.__init__` assigned: `WebSocketReceiver` wrapped around the
+`GnrWsgiSite` itself, or around that site wrapped in `GnrDebuggedApplication`
+when `debugger` is set. `WebSocketReceiver` passes plain HTTP through and adapts
+page RPC calls. The site runs synchronously
 on the worker's thread pool. While it runs it calls `site.register` — which is
 `GenropyRegisterClient` — and that object calls the worker's own methods
 directly, in the same process.

@@ -78,7 +78,7 @@ websocket; the pull via collect is an interim vehicle.
 
 ## Current state
 
-What exists today on `feat/8-genropy-machinery-in`: everything above, exercised
+What exists today: everything above, exercised
 by `tests/test_page_store_row.py`, `tests/test_data_plane.py`,
 `tests/test_request_exchange.py`, `tests/test_verb_refusal.py`,
 `tests/test_carried_store_views.py` and `tests/test_delivery_desk.py` on the live

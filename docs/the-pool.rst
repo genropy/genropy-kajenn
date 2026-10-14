@@ -114,15 +114,15 @@ Watch it
 --------
 
 ``/metrics`` gives the site-wide counters with no authentication, served by the
-front in the server process. It is the only observation surface the built-in
-recipe exposes.
+front in the server process. It is the only observation surface open without
+login.
 
 kajenn's ``_server`` application — with its monitor section under
-``/_server/monitor/`` — is **not** part of that recipe. A server that declares no
-``_server`` application exposes no ``/_server/...`` at all. To have it, write a
-``--config`` recipe that declares it; its routes are gated ``SERVER_ADMIN``, so
-the same recipe must also declare an administrator and the storage key the user
-store encrypts with.
+``/_server/monitor/`` — is mounted on every server, this one included, though
+the recipe does not declare it. The monitor routes are gated ``SERVER_ADMIN``
+and the server creates no user at boot: to read them, write a ``--config``
+recipe that declares an administrator and the storage key the user store
+encrypts with.
 
 For the questions nobody predicted there is the console: set ``KAJENN_CONSOLE``
 and the pool's debug door is mounted on ``/_console`` as MCP tools, evaluating an

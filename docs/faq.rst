@@ -31,7 +31,8 @@ What happened to the register daemon?
    or connect to. The package declares the ``gnr.web:daemon`` entry point, and
    genropy installs it as ``gnr.web.daemon`` when ``GNR_DAEMON_PROVIDER`` names
    it — which the CLI does for its own process. So the classic stack and this one
-   can share one virtualenv.
+   can share one virtualenv. The gate exists only in genropy ``develop``: see
+   :ref:`the genropy prerequisite <genropy-develop>`.
 
 Does a user always land on the same worker?
    Yes, while he has a worker. The routing cookie is ``spa_connection_id``, and
@@ -83,9 +84,10 @@ Where do I see what the pool is doing?
    ``GET /metrics``, unauthenticated, served by the front: the three population
    counters under the legacy metric name ``genropy_site_counters``, then the
    commander's aggregate event counters under ``genropy_site_events``. That is
-   the whole observation surface the built-in recipe exposes. kajenn's
-   ``_server`` application, monitor included, is not part of that recipe: a
-   server that declares no ``_server`` application exposes no ``/_server/...``.
+   the whole observation surface open without login. kajenn's ``_server``
+   application is mounted on every server, monitor included, but its sections
+   are gated ``SERVER_ADMIN`` or ``SUPERADMIN`` and the server creates no user
+   at boot: a ``--config`` recipe must declare an administrator and a storage key.
    For the questions nobody predicted, ``KAJENN_CONSOLE`` mounts the pool's debug
    door on ``_console`` — full ``eval``, never in production.
 
@@ -105,9 +107,11 @@ What state is this package in?
    Version 0.5.0, classified ``Development Status :: 4 - Beta`` in
    ``pyproject.toml``. The serving path, the register, the data plane and the
    fork-born workers have dedicated tests; the launch recipe and the CLI are
-   exercised by running the command, not by the suite. The modules of the old
-   daemon surface — ``handler.py``, ``service.py``, ``processes.py`` — exist only
-   so the imports resolve and raise when used.
+   exercised by ``tests/test_cli_multiworker_e2e.py``, which runs ``gnrkajenn``
+   as a subprocess inside the suite. The modules of the old daemon surface —
+   ``handler.py``, ``service.py``, ``processes.py`` — exist only so the imports
+   resolve; ``handler.py`` and ``service.py`` raise when used, ``processes.py``
+   is empty and raises nothing.
 
    .. note::
 

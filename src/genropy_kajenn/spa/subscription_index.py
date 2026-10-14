@@ -24,13 +24,10 @@ each of the three updates both sides together — there is no window in which
 one map knows something the other does not. An empty set is deleted rather
 than left behind, so a missing key and an empty set are never both possible.
 
-**The lock is the owner's.** ``lock`` is injected: the worker passes the lock
-that already serializes its registry mutations, so an index change and the
-row change it belongs to are one critical section. That lock is REENTRANT for
-exactly this reason — the caller holds it already when it reaches a primitive.
-The commander passes none — its mutations are sync methods on the event loop,
-and the invariant that keeps them safe is that the index primitives never
-await.
+**The lock is the owner's.** ``lock`` is injected. The only instance is the
+commander's, in ``DeliveryDesk``, and it passes none — its mutations are sync
+methods on the event loop, and the invariant that keeps them safe is that the
+index primitives never await.
 
 **Readers get copies.** ``pages_for`` and ``tables_for`` hand back a new set:
 a fan-out iterating the live set while a subscriber arrives would raise, and

@@ -118,8 +118,12 @@ Without a config file, ``gnrkajenn`` builds:
   other threshold is kajenn-orchestra's own default.
 
 What it does **not** build: no authentication, no session middleware in front of
-the site — both stay inside the ``GnrWsgiSite`` — and no ``_server``
-application, so there is no ``/_server/...`` surface at all.
+the site — both stay inside the ``GnrWsgiSite``. The recipe does not declare
+kajenn's ``_server`` application either, but kajenn mounts it on every server:
+``/_server/...`` exists. Its sections — the monitor under ``/_server/monitor/``
+included — are gated ``SERVER_ADMIN`` or ``SUPERADMIN``, and the server creates
+no user at boot, so they refuse every request until a ``--config`` recipe
+declares an administrator and the storage key the user store encrypts with.
 
 The recipe is ``genropy_kajenn/spa/config.py``, and reading it is the shortest
 answer to any question this page does not cover.
@@ -147,7 +151,7 @@ Surfaces:
 * the same four operations as MCP tools at ``/_sysop/mcp``.
 
 A profile is one ``<name>.json`` file. The name is 1 to 64 characters — letters,
-digits, dot, dash or underscore — and the ``.json`` suffix may be given or
+digits, dot, dash or underscore — starting with a letter or a digit, and the ``.json`` suffix may be given or
 omitted. The content must be a JSON object of at most 1 MiB, and a write is
 atomic. What a profile may carry is kajenn-orchestra's group grammar; its own
 documentation lists the keys.
@@ -196,8 +200,8 @@ When a config file earns its place
 ----------------------------------
 
 Reach for ``--config`` when you need something the recipe does not declare: a
-second application beside the site (see :doc:`composition`), the ``_server``
-application and an administrator for it, or group settings the environment does
+second application beside the site (see :doc:`composition`), an administrator
+for the ``_server`` application, or group settings the environment does
 not expose — the memory cascade, the occupancy setpoints, more than one group.
 
 A config file is a ``ServerConfiguration``, a subclass of kajenn's

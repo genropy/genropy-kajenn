@@ -23,14 +23,15 @@ sites on top of [kajenn](https://github.com/kajenn-org/kajenn) and the SPA pool 
 genropy-asgi `29008fa`, without history, the way kajenn was born from genro-asgi.
 
 - **Naming**: package `genropy-kajenn` (PyPI, hyphen) · import `genropy_kajenn` (underscore).
-- Depends on `kajenn` and `kajenn-orchestra` as libraries, through their **public API
-  only**: `AsgiServer`, `AsgiConfigBuilder`, `OpenApiApplication`,
-  `Response`, `BaseApplication`, `ConfigurationHandler` from `kajenn`; `SpaApplication`,
-  `SpaCommander`, `SpaWorker`, `RegisterRegistry`, `PageRow`, `GUEST_PREFIX`,
-  `WsgiSeam`, `FreezeHandler`, `GroupHandler`, `WorkerHandler`, `GroupPolicy`,
-  `CommanderEnvelopeHandler`, `CommanderCallFailed`, `RequestSlot`,
-  `ConfigurationProfilesApplication`, `SpaConsoleMcpApplication` from
-  `kajenn_orchestra`. It does NOT reach into internals.
+- Depends on `kajenn` and `kajenn-orchestra` as libraries. What `src/` imports from them:
+  - `kajenn`: `AsgiServer`, `HTTPForbidden`, `HTTPUnauthorized`; from submodules
+    `AsgiConfigBuilder` (`kajenn.config`), `OpenApiApplication` (`kajenn.applications.openapi`).
+  - `kajenn_orchestra`: `ConfigurationProfilesApplication`, `RegisterRegistry`, `PageRow`;
+    from submodules `SpaCommander`, `SpaWorker` (`kajenn_orchestra.orchestration`),
+    `CommanderEnvelopeHandler` (`.orchestration.envelope_handler`), `RequestSlot`
+    (`.orchestration.spa_worker`), `CommanderCallFailed` (`.orchestration.worker_connector`),
+    `SpaApplication` (`kajenn_orchestra.spa_app`), `SpaConsoleMcpApplication`
+    (`kajenn_orchestra.spa_console`).
 - genropy itself is a **runtime** requirement (the worker runs a `GnrWsgiSite`) and is not
   declared in `dependencies`: it is installed and configured outside this package. Four
   modules do import `gnr.*` at the top of the file — `spa/genropy_register.py`,
@@ -39,7 +40,7 @@ genropy-asgi `29008fa`, without history, the way kajenn was born from genro-asgi
 
 ### Architecture (rebased on the new core, 2026-08 — `bridge-rebase-new-core`)
 
-- **Front** (`GenropySpaApplication` on the core's `SpaApplicationNew`): ROOT mount (`""`),
+- **Front** (`GenropySpaApplication` on the core's `SpaApplication`): ROOT mount (`""`),
   serves `/metrics` natively and forwards site paths to the pool. The pool is born at
   startup from OUR recipe (`spa/config.py`): `orchestration().commander(...)` + ONE
   `group(worker_class=GenropyWorker, ...)` — genro-asgi 0.36 put the pool under the
@@ -90,7 +91,7 @@ genropy-asgi `29008fa`, without history, the way kajenn was born from genro-asgi
 ### Project-Specific Guidelines
 
 - Tests use the **public API only** — never wire internal registry state by hand; build state
-  by making lifecycle events happen (via `apply_lifecycle`).
+  by making lifecycle events happen (on a live lane: `SiteLane.verb` in `tests/lane.py`).
 - Docstrings declare what is PROVISIONAL and what is FIXED.
 - Verify live state (git/tests/PyPI) before asserting — never trust cache.
 

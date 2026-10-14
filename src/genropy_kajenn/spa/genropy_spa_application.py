@@ -8,7 +8,7 @@ recipe at startup (``SpaCommander`` and its groups), the two-stage demux
 (native routes vs the hosted site), the ``spa_connection_id`` routing
 cookie — the connection id the site itself creates, no mint — and the
 ``http`` CALL forward. The pool is not configured here: its words live in
-the recipe, under ``applications.<code>.commander`` — see
+the recipe, under ``applications.<code>.orchestration.commander`` — see
 ``genropy_kajenn.spa.config`` for the recipe this package ships. This
 subclass adds exactly the genropy fit:
 
@@ -65,7 +65,7 @@ class GenropySpaApplication(SpaApplication):
         kwargs: up the application chain. A ``mount`` can only ever confirm
             the root: an empty one is dropped, a non-empty one is refused.
             The pool (worker class, site source, policies) is NOT configured
-            here — it is recipe words under ``applications.<code>.commander``.
+            here — it is recipe words under ``applications.<code>.orchestration.commander``.
         """
         mount = kwargs.pop("mount", None)
         if mount:
