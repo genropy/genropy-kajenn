@@ -95,9 +95,18 @@ class Rows:
         self.db = db
         self.users = []
         self.tokens = []
+        self.tags = []
 
     def tag(self, code):
-        return self.db.table("adm.htag").query(where="$code=:c", c=code).fetch()[0]["pkey"]
+        """The tag ``code``, created when the database does not have it (a fresh one has none)."""
+        table = self.db.table("adm.htag")
+        found = table.query(where="$code=:c", c=code).fetch()
+        if found:
+            return found[0]["pkey"]
+        record = table.newrecord(code=code, description=code)
+        table.insert(record)
+        self.tags.append(record["id"])
+        return record["id"]
 
     def user(self, username, tags=()):
         table = self.db.table("adm.user")
@@ -125,7 +134,7 @@ class Rows:
         return self.db.table("adm.api_token").record(pkey=token_id).output("dict")
 
     def delete(self):
-        for table, pkeys in (("adm.api_token", self.tokens), ("adm.user", self.users)):
+        for table, pkeys in (("adm.api_token", self.tokens), ("adm.user", self.users), ("adm.htag", self.tags)):
             if pkeys:
                 self.db.table(table).deleteSelection(where="$id IN :pkeys", pkeys=pkeys)
         self.db.commit()
