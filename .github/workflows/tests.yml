@@ -45,7 +45,10 @@ jobs:
       PGUSER: postgres
       PGPASSWORD: postgres
       PGGSSENCMODE: disable
-      GENRO_GNRFOLDER: ${{ github.workspace }}/gnr
+      # Called gnr (genropy reads it under the folder's name) and kept out of
+      # the workspace: pytest puts the workspace on sys.path, where a gnr/
+      # folder would shadow the gnr package as an empty namespace package.
+      GENRO_GNRFOLDER: ${{ github.workspace }}/../genro-config/gnr
     steps:
       - uses: actions/checkout@v4
 
