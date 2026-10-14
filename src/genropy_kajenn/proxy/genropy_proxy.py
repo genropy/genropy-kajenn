@@ -27,6 +27,9 @@ from __future__ import annotations
 import logging
 from typing import Any
 
+from genro_routes import route
+
+from kajenn import HTTPForbidden, HTTPUnauthorized
 from kajenn.applications.openapi import OpenApiApplication
 
 log = logging.getLogger("genropy_kajenn.proxy")
@@ -79,6 +82,48 @@ class GenropyProxyMixin:
         db = getattr(self._gnr_app, "db", None)
         if db is not None:
             db.closeConnection()
+
+    @route(media_type="application/json", openapi_method="post")
+    def authenticate(
+        self, credential: str = "", channel: str = "", _request=None
+    ) -> dict[str, Any]:
+        """Verify a ``Bearer`` credential against ``adm.api_token``.
+
+        The ``authentication_route`` of a channel: kajenn sends the whole
+        ``Authorization`` value as ``credential``; the scheme is matched
+        case-insensitively, as kajenn's own route does. Answers kajenn's contract
+        ``{identity, tags, data, valid_until}``; ``data`` is the
+        ``validate_token`` result without ``user``, ``auth_tags`` and
+        ``user_record`` (``avatar.data`` travels with every bus call), the
+        ``<pkg>_`` keys passed through unchanged. An unknown, inactive or
+        expired token, or a scheme other than ``Bearer``, raises
+        ``HTTPUnauthorized``. Reachable through the bus only: an HTTP caller
+        gets 403.
+
+        FIXED: the answer's shape (kajenn's contract). PROVISIONAL: the
+        identity of a group token (its description, else ``unknown`` plus its
+        hint) until genropy makes the description mandatory and unique.
+        """
+        if _request is None or not _request.scope.get("kajenn.kbus"):
+            raise HTTPForbidden("this route serves the KajennBus only")
+        scheme, _, token = credential.partition(" ")
+        if scheme.lower() != "bearer" or not token:
+            raise HTTPUnauthorized("Bearer credential required")
+        db = self._gnr_app.db
+        tokens = db.table("adm.api_token")
+        info = tokens.validate_token(token)
+        db.commit()
+        if info is None:
+            raise HTTPUnauthorized("invalid or expired token")
+        record = tokens.record(pkey=info["token_id"]).output("dict")
+        expires_ts = record["expires_ts"]
+        identity = info.get("user") or info["description"] or f"unknown{record['token_hint'].strip()}"
+        return {
+            "identity": identity,
+            "tags": [tag for tag in (info["auth_tags"] or "").split(",") if tag],
+            "data": {key: value for key, value in info.items() if key not in ("user", "auth_tags", "user_record")},
+            "valid_until": expires_ts.timestamp() if expires_ts else None,
+        }
 
     def on_shutdown(self) -> None:
         """Release the GnrApp on server stop, then the base."""

@@ -24,7 +24,7 @@ genropy-asgi `29008fa`, without history, the way kajenn was born from genro-asgi
 
 - **Naming**: package `genropy-kajenn` (PyPI, hyphen) · import `genropy_kajenn` (underscore).
 - Depends on `kajenn` and `kajenn-orchestra` as libraries, through their **public API
-  only**: `AsgiServer`, `AsgiConfigBuilder`, `OpenApiApplication`, `FrameStream`,
+  only**: `AsgiServer`, `AsgiConfigBuilder`, `OpenApiApplication`,
   `Response`, `BaseApplication`, `ConfigurationHandler` from `kajenn`; `SpaApplication`,
   `SpaCommander`, `SpaWorker`, `RegisterRegistry`, `PageRow`, `GUEST_PREFIX`,
   `WsgiSeam`, `FreezeHandler`, `GroupHandler`, `WorkerHandler`, `GroupPolicy`,
@@ -99,7 +99,7 @@ genropy-asgi `29008fa`, without history, the way kajenn was born from genro-asgi
 - The data plane (datachanges, table subscriptions, dbevents): `docs/internal/datachanges.md`
   and `docs/internal/dbevents.md`.
 - The pool and its internals: `docs/the-pool.rst`, `docs/internal/pool-internals.rst`.
-- What is built today: `docs/status.rst`.
+- What is built today: `docs/architecture/overview.md`.
 - The migration that created this repository: `kajenn-meta/MIGRATION_PLAN.md`, Phase 9.
 
 ---

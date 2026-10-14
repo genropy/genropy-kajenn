@@ -4,8 +4,8 @@
 """Unit tests for GenropyWorker, GenropyRegistry and the legacy-Bag capture.
 
 The collector and registry tests need genropy (the legacy Bag) but no site;
-the worker construction tests build a real ``GnrWsgiSite`` and skip cleanly
-when the ``test_invoice_pg`` site cannot be built. State is always built
+the worker construction tests build a real ``GnrWsgiSite`` on the
+``test_invoice_pg`` site, a documented prerequisite: a site that cannot be built fails. State is always built
 through the public API — registry lifecycle calls and real Bag writes —
 never by wiring internal structures by hand.
 """
@@ -298,18 +298,15 @@ def test_login_reattaches_the_user_view_and_redeposits_pending():
 
 @pytest.fixture(scope="module")
 def worker():
-    """One real GnrWsgiSite hosted by a GenropyWorker; skip if the site is missing."""
+    """One real GnrWsgiSite hosted by a GenropyWorker."""
     from kajenn_orchestra.orchestration import FreezeHandler
 
     from genropy_kajenn.spa.genropy_worker import GenropyWorker
 
     deposit = tempfile.mkdtemp(prefix="gnr_frozen_")
-    try:
-        instance = GenropyWorker(
-            "pool_0001", source=_SITE, debug=False, freeze_handler=FreezeHandler(deposit)
-        )
-    except Exception as exc:  # site missing or broken: skip, don't fail
-        pytest.skip(f"cannot build the {_SITE} site: {exc}")
+    instance = GenropyWorker(
+        "pool_0001", source=_SITE, debug=False, freeze_handler=FreezeHandler(deposit)
+    )
     # The tests call the verbs from this thread, outside any CALL: the verbs
     # announce into the request slot, so the thread needs one open.
     instance.open_request_slot()
@@ -381,7 +378,7 @@ def test_the_register_client_is_ours_and_wired_at_construction(worker):
 
 
 def test_a_bare_worker_is_not_a_pool_member(worker):
-    # no wire attached: every row it ever made is its own, so the commit gate
+    # no member attached: every row it ever made is its own, so the commit gate
     # may answer from the worker's subscription cache
     assert worker.pool_member is False
 

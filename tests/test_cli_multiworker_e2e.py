@@ -70,7 +70,7 @@ def pool_server():
         ready = False
         while time.monotonic() < deadline:
             if process.poll() is not None:
-                pytest.skip("gnrkajenn exited early (site/env not available)")
+                pytest.fail("gnrkajenn exited early")
             try:
                 # /metrics is native (commander process); / forwards to the child,
                 # so a 200 on it means the worker subprocess hosts the site.
@@ -82,7 +82,7 @@ def pool_server():
                 pass
             time.sleep(0.4)
         if not ready:
-            pytest.skip("pool did not come up in time")
+            pytest.fail("pool did not come up in time")
         yield base_url
     finally:
         if process.poll() is None:

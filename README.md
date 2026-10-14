@@ -81,6 +81,26 @@ pytest tests/
 ruff check src/ tests/
 ```
 
+The live tests host the `test_invoice_pg` instance of genropy and need:
+
+- a genropy checkout (the `develop` branch), installed with
+  `pip install -e "gnrpy[pgsql]"` plus the `requirements.txt` of the
+  `gnrcore/adm` package;
+- a genro configuration folder named by `GENRO_GNRFOLDER`, whose
+  `environment.xml` points at that checkout (`gnrhome`, `projects`, `packages`,
+  `resources`, `webtools`); the folder itself must be called `gnr`, because
+  genropy reads its files under the folder's name (`gnr.environment_xml`),
+  and kept outside any directory on `sys.path`, where it would shadow the `gnr`
+  package;
+- a running PostgreSQL, reached with the libpq variables (`PGUSER`,
+  `PGPASSWORD`, `PGHOST`);
+- the database built with `gnr app dbsetup test_invoice_pg`.
+
+The suite skips only for genropy not installed, a database driver not installed,
+an opt-in variable not set (`BENCH_*`, `GNR_BENCH_*`, `GNR_WSX_TEST_URL`) and an
+installed genropy without `websocketHandlerClass`. Any other missing prerequisite
+fails the run. `.github/workflows/tests.yml` builds all of the above.
+
 ## License
 
 Apache License 2.0 — Copyright 2025 Softwell S.r.l. See [LICENSE](LICENSE) and

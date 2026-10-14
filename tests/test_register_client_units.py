@@ -11,7 +11,7 @@ The lifecycle ops announce on the CALL that causes them, so the tests open the
 same sink ``service_call`` opens — the core's own test convention
 (kajenn tests/test_spa_worker.py, ``call_sink``).
 
-The whole module skips when genropy or the site is missing.
+The whole module skips when genropy is not installed; a missing site fails.
 """
 
 import datetime
@@ -58,10 +58,7 @@ def lane():
     """One live lane — worker, handler, desk — for the whole module."""
     from tests.lane import start_site_lane
 
-    try:
-        instance = start_site_lane(_SITE)
-    except Exception as exc:  # site missing or broken: skip, don't fail
-        pytest.skip(f"cannot build the {_SITE} site: {exc}")
+    instance = start_site_lane(_SITE)
     yield instance
     instance.stop()
 

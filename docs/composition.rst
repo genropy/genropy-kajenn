@@ -62,6 +62,9 @@ defaults to ``api``, so a method named ``customers`` answers on
 ``/api/api/customers``; set ``api_name`` to change that segment. The OpenAPI meta
 endpoints sit under ``_meta`` — ``/api/_meta/`` — in every case.
 
+The mixin also carries ``authenticate``, the ``authentication_route`` of a kajenn
+channel over the instance's ``adm.api_token``: see :doc:`configuration`.
+
 Beside: the same class as MCP
 -----------------------------
 

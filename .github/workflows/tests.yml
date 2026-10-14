@@ -13,33 +13,106 @@ name: Tests
 
 jobs:
   test:
-    name: pytest + ruff (Linux/glibc)
+    name: pytest + ruff (Linux/glibc, Python ${{ matrix.python-version }})
     runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        # The lowest version requires-python declares and the latest one.
+        python-version: ['3.11', '3.14']
     permissions:
       contents: read
       id-token: write
-    timeout-minutes: 15
+    timeout-minutes: 20
+    services:
+      postgres:
+        image: dockette/postgres
+        env:
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: postgres
+          POSTGRES_USER: postgres
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
+    env:
+      # The live tests host the test_invoice_pg instance of the genropy
+      # checkout below: a missing prerequisite fails the run, never skips it.
+      PGHOST: localhost
+      PGUSER: postgres
+      PGPASSWORD: postgres
+      PGGSSENCMODE: disable
+      # Called gnr (genropy reads it under the folder's name) and kept out of
+      # the workspace: pytest puts the workspace on sys.path, where a gnr/
+      # folder would shadow the gnr package as an empty namespace package.
+      GENRO_GNRFOLDER: ${{ github.workspace }}/../genro-config/gnr
     steps:
       - uses: actions/checkout@v4
+
+      - name: Check out genropy (develop)
+        uses: actions/checkout@v4
+        with:
+          repository: genropy/genropy
+          ref: develop
+          path: genropy
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: ${{ matrix.python-version }}
 
-      - name: Install project with dev extras
+      - name: Install genropy and the project with dev extras
         run: |
           python -m pip install --upgrade pip
           # genropy is imported at runtime and is not a declared dependency:
           # the bridge hosts a site the operator already has. The tests need it.
-          pip install genropy
+          pip install -e "genropy/gnrpy[pgsql]" \
+            -r genropy/projects/gnrcore/packages/adm/requirements.txt
           pip install ".[dev]"
+
+      - name: Write the genro configuration
+        run: |
+          G="$GITHUB_WORKSPACE/genropy"
+          mkdir -p "$GENRO_GNRFOLDER/instanceconfig" "$GENRO_GNRFOLDER/siteconfig"
+          cat > "$GENRO_GNRFOLDER/environment.xml" <<EOF
+          <?xml version='1.0' encoding='UTF-8'?>
+          <GenRoBag>
+            <environment><gnrhome value="$G"/></environment>
+            <projects><genropy path="$G/projects"/></projects>
+            <packages><genropy path="$G/packages"/></packages>
+            <static><js>
+              <dojo_11 path="$G/dojo_libs/dojo_11" cdn=""/>
+              <gnr_11 path="$G/gnrjs/gnr_d11"/>
+            </js></static>
+            <resources><genropy path="$G/resources"/></resources>
+            <webtools><genropy path="$G/webtools"/></webtools>
+          </GenRoBag>
+          EOF
+          cat > "$GENRO_GNRFOLDER/instanceconfig/default.xml" <<EOF
+          <?xml version="1.0" ?>
+          <GenRoBag><packages/></GenRoBag>
+          EOF
+          cat > "$GENRO_GNRFOLDER/siteconfig/default.xml" <<EOF
+          <?xml version="1.0" ?>
+          <GenRoBag>
+            <jslib dojo_version="11" gnr_version="11"/>
+            <resources><common/><js_libs/></resources>
+          </GenRoBag>
+          EOF
+
+      - name: Build the test_invoice_pg database
+        run: |
+          createdb test_invoice_pg
+          gnr app dbsetup test_invoice_pg
 
       - name: Ruff
         run: ruff check src/ tests/
 
       - name: Tests
-        run: pytest tests/ --cov-report=xml:coverage.xml
+        run: pytest tests/ -rs --cov-report=xml:coverage.xml
 
       - name: Upload coverage to Codecov
         uses: codecov/codecov-action@0fb7174895f61a3b6b78fc075e0cd60383518dac # v5

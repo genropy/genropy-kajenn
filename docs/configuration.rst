@@ -158,6 +158,40 @@ documentation lists the keys.
    profiles. It is opt-in for that reason — development and lab only. Before
    production the sysop surface must be gated.
 
+Channel authentication over ``adm.api_token``
+---------------------------------------------
+
+``GenropyProxyMixin`` carries an ``authenticate`` route that verifies a kajenn
+channel's ``Bearer`` credential against the instance's ``adm.api_token`` table.
+Mount a proxy application on the instance and name the route as the channel's
+``authentication_route``:
+
+.. code-block:: python
+
+   apps = cfg.applications()
+   apps.application(code="proxy", app_class=GenropyProxyOpenApiApplication,
+                    instance="mysite")
+   cfg.channels().channel(name="rest", authentication_route="/proxy/authenticate")
+
+kajenn calls the route over its bus with the whole ``Authorization`` value; a
+plain HTTP request to the route gets 403. The route accepts only the ``Bearer``
+scheme, passes the token to ``validate_token``, commits (so ``last_used_ts`` is
+recorded), and answers kajenn's contract:
+
+* ``identity`` — the token's user, else its description, else ``unknown`` plus
+  its hint;
+* ``tags`` — the comma-separated ``auth_tags`` of the validation, as a list;
+* ``data`` — the ``validate_token`` result without ``user``, ``auth_tags`` and
+  ``user_record``, values unchanged (``token_id``, ``group_code``,
+  ``description``, ``user_id``, ``user_name`` and the ``<pkg>_`` keys); the
+  handler reads it as ``avatar.data``. ``avatar.data`` travels with every bus
+  call made for the avatar, so the user's row stays in ``adm.user``, read
+  through ``user_id`` by whoever needs it;
+* ``valid_until`` — the token's ``expires_ts`` as a POSIX timestamp, or ``None``.
+
+The scheme is matched case-insensitively (``Bearer``, ``bearer``). An unknown,
+inactive or expired token, or another scheme, is a 401 to the client.
+
 When a config file earns its place
 ----------------------------------
 

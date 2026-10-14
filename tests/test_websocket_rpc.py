@@ -75,7 +75,7 @@ class RpcAdapterTest(unittest.TestCase):
                                                 lambda status, headers: None))
 
 
-@unittest.skipUnless(os.environ.get("GNR_WSX_TEST_URL"), "requires a running test site")
+@unittest.skipUnless(os.environ.get("GNR_WSX_TEST_URL"), "set GNR_WSX_TEST_URL for the running test site")
 class LiveRpcTest(unittest.TestCase):
     def test_http_wsk_results_errors_and_fresh_pages(self):
         base = os.environ["GNR_WSX_TEST_URL"].rstrip("/")

@@ -8,8 +8,8 @@ always: they verify the hooks the mixin owns — ``route_cleanup`` closes the db
 connection, ``gnr_app`` exposes the hosted app, and the MRO is correct.
 
 The end-to-end test REQUIRES genropy installed and the ``test_invoice_pg``
-instance available; it is skipped otherwise. It mounts the proxy on a worker with
-a minimal RoutingClass that reads ``parent.gnr_app`` and drives a real request,
+instance available; it skips only without genropy or ``psycopg2``. It mounts the
+proxy on a worker with a minimal RoutingClass that reads ``parent.gnr_app`` and drives a real request,
 checking the db connection is closed by ``route_cleanup``.
 """
 
@@ -114,10 +114,7 @@ def test_e2e_real_gnrapp_closes_connection():
     from kajenn import AsgiServer
     from genropy_kajenn.spa.site_engine_factory import GenropySiteEngineFactory
 
-    try:
-        GenropySiteEngineFactory(source=_INSTANCE, debug=False).build_site()
-    except Exception as exc:  # no ~/.gnr or no instance on this machine: skip, don't fail
-        pytest.skip(f"cannot resolve the {_INSTANCE} instance: {exc}")
+    GenropySiteEngineFactory(source=_INSTANCE, debug=False).build_site()
 
     api = _DemoApi(None)
     server = AsgiServer(

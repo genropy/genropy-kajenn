@@ -11,7 +11,7 @@ from benchmarks.portal import store
 from benchmarks.portal.server import create_server
 
 pytestmark = pytest.mark.skipif(not os.environ.get('BENCH_DATABASE_URL'),
-                                reason='requires isolated portal test PostgreSQL')
+                                reason='set BENCH_DATABASE_URL to an isolated portal test PostgreSQL')
 
 
 @pytest.mark.asyncio
