@@ -10,7 +10,7 @@ coding style, mypy policy (advisory, never blocking), and all general policies.
 
 ### Current Status
 - **Development Status**: Beta (`Development Status :: 4 - Beta`)
-- **Version**: 0.5.1
+- **Version**: 0.5.2
 - **Python**: >= 3.11
 - **Build**: hatchling, src/ layout, `py.typed`
 - **Has Implementation Code**: Yes
