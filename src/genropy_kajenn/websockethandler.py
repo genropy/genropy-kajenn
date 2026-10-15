@@ -24,8 +24,12 @@ What genropy consumes, and nothing else:
 
 ``checkSocket()``
     ``True`` keeps the handler as ``site.wsk``; ``False`` turns ``site.websockets``
-    off for the life of the process. Here it is always ``True``: there is no
-    ``async.sock`` to probe, the socket is the one the server terminates.
+    off for the life of the process. There is no ``async.sock`` to probe: the
+    answer is the operator's switch ``KAJENN_WEBSOCKET``, which ``gnrkajenn
+    --websocket`` writes. Unset, the socket is off and every page call travels
+    over HTTP (decision of 2026-10-15: after a restart that forgot the page, the
+    ``gnrwebsocket_kajenn`` client retries without end, while the HTTP road shows
+    genropy's own reload notice).
 
 ``sendCommandToPage(page_id, command, data)``
     the page's one outbound call. ``GnrWebPage._register_new_page`` sends
@@ -45,6 +49,11 @@ genropy's own handler and are not part of this contract: a page reaches them onl
 through ``wsk_enabled`` push paths, which stay on the pull road.
 """
 
+import os
+
+# The operator's switch: any value turns the page socket on.
+WEBSOCKET_ENV = "KAJENN_WEBSOCKET"
+
 
 class WsgiWebSocketHandler:
     """The websocket handler of a site served by the bridge."""
@@ -55,8 +64,8 @@ class WsgiWebSocketHandler:
         self.site = site
 
     def checkSocket(self):
-        """Report the socket as available: the server terminates it, not async.sock."""
-        return True
+        """Report the socket as available only when ``KAJENN_WEBSOCKET`` carries a value."""
+        return bool(os.environ.get(WEBSOCKET_ENV))
 
     def sendCommandToPage(self, page_id, command, data):
         """Drop the command: the websocket carries page rpc, not server-to-page delivery."""

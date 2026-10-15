@@ -45,6 +45,12 @@ Nothing else is read.
      - Unset. Any value wraps the site in the werkzeug debugger, whose error page
        carries a traceback and a console that evaluates Python in the process.
        Written by ``--fulldebug``, and never on as a side effect of debug.
+   * - ``KAJENN_WEBSOCKET``
+     - any value
+     - Unset. Any value carries the page calls over the websocket; unset, every
+       call travels over HTTP. Written by ``--websocket``. Off by default because
+       after a restart that forgot the page the websocket client retries without
+       end, while over HTTP the page shows genropy's reload notice.
    * - ``KAJENN_FROZEN_USERS_PATH``
      - path
      - ``<site>/data/_frozen_users``. The freezer root. It defaults **inside** the
