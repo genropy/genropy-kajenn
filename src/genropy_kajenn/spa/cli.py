@@ -27,6 +27,9 @@ Usage:
 
 ``--fulldebug`` adds the werkzeug debugger to debug; debug alone no longer
 brings it, so an error page that evaluates Python never appears by accident.
+
+``--websocket`` turns the page socket on; without it every page call travels
+over HTTP.
 """
 
 from __future__ import annotations
@@ -79,6 +82,12 @@ def cmd_serve(argv: list[str]) -> int:
         "the SQL counters and the developer's extras without that page",
     )
     parser.add_argument(
+        "--websocket",
+        action="store_true",
+        help="carry the page calls over the websocket (KAJENN_WEBSOCKET); "
+        "off by default, every call travels over HTTP",
+    )
+    parser.add_argument(
         "--config",
         default=None,
         help="server config.py (a ServerConfiguration) instead of the built-in recipe; "
@@ -104,6 +113,8 @@ def cmd_serve(argv: list[str]) -> int:
     if opts.fulldebug:
         os.environ["KAJENN_DEBUG"] = "1"
         os.environ["KAJENN_DEBUGGER"] = "1"
+    if opts.websocket:
+        os.environ["KAJENN_WEBSOCKET"] = "1"
     if os.environ.get("KAJENN_WORKERS"):
         print(
             "KAJENN_WORKERS is set but no longer read: the pool always runs "

@@ -35,6 +35,7 @@ class WebSocketProviderTest(unittest.TestCase):
                 f'[gnr.web]\nwebsockethandler = {entry}\n')
             env = os.environ.copy()
             env.pop('GNR_DAEMON_PROVIDER', None)
+            env.pop('KAJENN_WEBSOCKET', None)
             if provider:
                 env['GNR_DAEMON_PROVIDER'] = provider
             env['PYTHONPATH'] = os.pathsep.join(
@@ -52,12 +53,15 @@ class WebSocketProviderTest(unittest.TestCase):
     def test_the_selected_handler_is_this_package_and_opens_no_socket(self):
         self.require_selector()
         result = self.run_import('genropy-kajenn', SELECTOR + '''
+import os
 from unittest.mock import patch
 with patch('socket.socket', side_effect=AssertionError('unexpected socket')):
     from genropy_kajenn.websockethandler import WsgiWebSocketHandler as Expected
     handler_class = websocketHandlerClass()
     assert handler_class is Expected
     handler = handler_class(object())
+    assert handler.checkSocket() is False
+    os.environ['KAJENN_WEBSOCKET'] = '1'
     assert handler.checkSocket() is True
     assert handler.sendCommandToPage('', 'registerNewPage', {}) is None
     assert handler.sendCommandToPage('page', 'publish', {}) is None

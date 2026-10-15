@@ -17,6 +17,7 @@ it answers as soon as the front is up) and then on ``/`` (which forwards, so it
 answers 200 only once the child hosts the site).
 """
 
+import contextlib
 import importlib.util
 import os
 import re
@@ -49,16 +50,17 @@ def read_metrics(client: httpx.Client) -> dict[str, int]:
     return {name: int(value) for name, value in METRIC_RE.findall(text)}
 
 
-@pytest.fixture(scope="module")
-def pool_server():
-    """gnrkajenn as a real subprocess; yields its base URL."""
+@contextlib.contextmanager
+def running_gnrkajenn(*options: str):
+    """gnrkajenn as a real subprocess, started with ``options``; yields its base URL."""
     port = free_port()
     env = dict(os.environ)
     # macOS: libpq + Kerberos + fork segfaults the forked children without this.
     env.setdefault("PGGSSENCMODE", "disable")
+    env.pop("KAJENN_WEBSOCKET", None)
     process = subprocess.Popen(
         [sys.executable, "-m", "genropy_kajenn.spa.cli", _SITE, "-p", str(port),
-         "--nodebug"],
+         "--nodebug", *options],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,
         start_new_session=True,
@@ -91,6 +93,13 @@ def pool_server():
                 process.wait(timeout=10)
             except subprocess.TimeoutExpired:
                 os.killpg(process.pid, signal.SIGKILL)
+
+
+@pytest.fixture(scope="module")
+def pool_server():
+    """gnrkajenn as a real subprocess with the default options; yields its base URL."""
+    with running_gnrkajenn() as base_url:
+        yield base_url
 
 
 def test_page_served_by_the_pool_through_the_commander(pool_server):
@@ -161,3 +170,17 @@ def test_the_routing_cookie_survives_a_reload(pool_server):
         assert response.status_code == 200
         assert other.cookies["spa_connection_id"] != cid
         assert read_metrics(other)["connections"] >= before["connections"] + 1
+
+
+def test_the_page_socket_is_off_by_default(pool_server):
+    """Without --websocket the page is told no socket: every call travels over HTTP."""
+    response = httpx.get(pool_server + "/", timeout=30.0)
+    assert response.status_code == 200
+    assert '"websockets_url": "::NN"' in response.text
+
+
+def test_websocket_turns_the_page_socket_on():
+    with running_gnrkajenn("--websocket") as base_url:
+        response = httpx.get(base_url + "/", timeout=30.0)
+    assert response.status_code == 200
+    assert '"websockets_url": "/websocket"' in response.text

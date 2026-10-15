@@ -104,7 +104,7 @@ Is it faster than ``gnrwsgiserve``?
    different execution modes may not be quoted.
 
 What state is this package in?
-   Version 0.5.1, classified ``Development Status :: 4 - Beta`` in
+   Version 0.5.2, classified ``Development Status :: 4 - Beta`` in
    ``pyproject.toml``. The serving path, the register, the data plane and the
    fork-born workers have dedicated tests; the launch recipe and the CLI are
    exercised by ``tests/test_cli_multiworker_e2e.py``, which runs ``gnrkajenn``
