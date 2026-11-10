@@ -25,21 +25,37 @@ Two ways to grow
 * **In place** — add native routes to the front itself, on paths the site already
   owns, so they shadow the legacy handler one path at a time.
 
-Beside: a REST / OpenAPI surface on the site's database
--------------------------------------------------------
+Beside: routes on the site's database
+-------------------------------------
 
-``GenropyProxyOpenApiApplication`` (from ``genropy_kajenn.proxy``) hosts a
-``GnrApp`` behind kajenn's ``OpenApiApplication``. Your routing class exposes
-plain methods as REST; the mixin closes the thread-local database connection on
-the executor thread after each handler, which is where it is thread-correct.
-Point it at the same instance the site serves:
+``GnrAppWrapperApplication`` (from ``genropy_kajenn.gnrapp_wrapper``) is a kajenn
+``RoutedApplication`` that hosts a ``GnrApp`` and exposes it as ``self.gnr_app``.
+The mixin closes the thread-local database connection on the executor thread
+after each handler, which is where it is thread-correct. Subclass it with your
+routes, or attach a routing class you already have in the constructor, and point
+it at the same instance the site serves:
 
 .. code-block:: python
 
+   from genro_routes import RoutingClass, route
    from kajenn.config import AsgiConfigBuilder
 
-   from genropy_kajenn.proxy import GenropyProxyOpenApiApplication
-   from genropy_kajenn.spa.genropy_spa_application import GenropySpaApplication
+   from genropy_kajenn.gnrapp_wrapper import GnrAppWrapperApplication
+
+
+   class CustomerApi(RoutingClass):
+       def __init__(self, application):
+           self.application = application
+
+       @route(channel_channels="api,mcp")
+       def customers(self):
+           return self.application.gnr_app.db.table("mypkg.customer").query().fetch()
+
+
+   class Customers(GnrAppWrapperApplication):
+       def __init__(self, **kwargs):
+           super().__init__(**kwargs)
+           self.route.add_branches({"name": "api", "instance": CustomerApi(self)})
 
 
    class ServerConfiguration(AsgiConfigBuilder):
@@ -48,48 +64,19 @@ Point it at the same instance the site serves:
            cfg.server(host="127.0.0.1", port=8000)
            cfg.middleware()
            applications = cfg.applications()
-           applications.application(code="api", mount="api",
-                                    app_class=GenropyProxyOpenApiApplication,
-                                    instance="mysite",      # the genropy instance
-                                    module="myproject.api",  # the routing class
-                                    docs="swagger")
+           applications.application(code="customers", app_class=Customers,
+                                    instance="mysite")  # the genropy instance
            # ... the site front and its orchestration node, as in spa/config.py
 
-``instance`` is required: the mixin raises ``ValueError`` without one. Supply the
-API either as ``routing_class=`` (an instance) or as ``module=`` (a dotted path
-the application imports). The mounted class is attached under ``api_name``, which
-defaults to ``api``, so a method named ``customers`` answers on
-``/api/api/customers``; set ``api_name`` to change that segment. The OpenAPI meta
-endpoints sit under ``_meta`` — ``/api/_meta/`` — in every case.
+``instance`` is required: the mixin raises ``ValueError`` without one. The
+routing class is attached under ``api``, so ``customers`` answers on
+``/customers/api/customers``. Like every kajenn ``RoutedApplication`` it also has
+an MCP face on ``/customers/_meta/mcp``: a route declaring the channel ``mcp`` is
+a tool there, named ``api.customers``, and a route that declares no channel
+answers on ``api`` only. The OpenAPI document is ``/customers/_meta/api/schema_json``.
 
 The mixin also carries ``authenticate``, the ``authentication_route`` of a kajenn
 channel over the instance's ``adm.api_token``: see :doc:`configuration`.
-
-Beside: the same class as MCP
------------------------------
-
-``McpOpenApiApplication`` (from ``kajenn.applications.mcp``) is
-``OpenApiApplication`` plus an MCP face over the very same router: one set of
-methods serves a REST client and an agent, with no second implementation.
-
-.. code-block:: python
-
-   from kajenn.applications.mcp import McpOpenApiApplication
-
-   applications.application(code="tools", mount="tools",
-                            app_class=McpOpenApiApplication,
-                            module="myproject.api")
-
-The MCP JSON-RPC face answers under ``mcp_name_segment``, which defaults to
-``mcp`` — so ``/tools/mcp``. Which methods are visible there is the ``channel``
-plugin's job: the MCP face lists only entries declared on channel ``mcp``, and a
-method that declares nothing stays REST-only.
-
-That class has no genropy database of its own. To expose a genropy database as
-MCP, compose ``GenropyProxyMixin`` with it the way
-``GenropyProxyOpenApiApplication`` composes it with ``OpenApiApplication``: the
-mixin comes first, so it owns ``__init__``, ``route_cleanup`` and
-``on_shutdown``, and the base keeps its own machinery.
 
 In place: replace site paths one at a time
 ------------------------------------------

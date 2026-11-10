@@ -1,7 +1,7 @@
 # Copyright 2025 Softwell S.r.l.
 # Licensed under the Apache License, Version 2.0
 
-"""Tests for GenropyProxyMixin — the genropy legacy db behind an OpenApiApplication.
+"""Tests for GnrAppWrapperMixin — the db of a genropy legacy instance inside a kajenn application.
 
 The structural/unit tests use a fake GnrApp (an external dependency stub) and run
 always: they verify the hooks the mixin owns — ``route_cleanup`` closes the db
@@ -9,7 +9,7 @@ connection, ``gnr_app`` exposes the hosted app, and the MRO is correct.
 
 The end-to-end test REQUIRES genropy installed and the ``test_invoice_pg``
 instance available; it skips only without genropy or ``psycopg2``. It mounts the
-proxy on a worker with a minimal RoutingClass that reads ``parent.gnr_app`` and drives a real request,
+wrapper with a minimal RoutingClass that reads ``application.gnr_app`` and drives a real request,
 checking the db connection is closed by ``route_cleanup``.
 """
 
@@ -18,8 +18,8 @@ import importlib.util
 import pytest
 from genro_routes import RoutingClass, route
 
-from kajenn.applications.openapi import OpenApiApplication
-from genropy_kajenn.proxy import GenropyProxyMixin, GenropyProxyOpenApiApplication
+from kajenn.routed_application import RoutedApplication
+from genropy_kajenn.gnrapp_wrapper import GnrAppWrapperApplication, GnrAppWrapperMixin
 
 _HAS_GNR = importlib.util.find_spec("gnr") is not None
 _INSTANCE = "test_invoice_pg"
@@ -43,8 +43,8 @@ class _FakeGnrApp:
 
 
 @pytest.fixture
-def proxy(monkeypatch):
-    """A GenropyProxyOpenApiApplication whose GnrApp is a stub.
+def wrapper(monkeypatch):
+    """A GnrAppWrapperApplication whose GnrApp is a stub.
 
     Patches gnr.app.gnrapp.GnrApp — the external dependency — so no real genropy
     instance is needed. Everything else is the real kajenn machinery.
@@ -57,16 +57,16 @@ def proxy(monkeypatch):
     monkeypatch.setitem(sys.modules, "gnr", types.ModuleType("gnr"))
     monkeypatch.setitem(sys.modules, "gnr.app", types.ModuleType("gnr.app"))
     monkeypatch.setitem(sys.modules, "gnr.app.gnrapp", fake_module)
-    return GenropyProxyOpenApiApplication(instance=_INSTANCE)
+    return GnrAppWrapperApplication(instance=_INSTANCE)
 
 
 def test_is_openapi_application_subclass():
-    assert issubclass(GenropyProxyOpenApiApplication, OpenApiApplication)
+    assert issubclass(GnrAppWrapperApplication, RoutedApplication)
 
 
 def test_mixin_comes_before_base_in_mro():
-    mro = GenropyProxyOpenApiApplication.__mro__
-    assert mro.index(GenropyProxyMixin) < mro.index(OpenApiApplication)
+    mro = GnrAppWrapperApplication.__mro__
+    assert mro.index(GnrAppWrapperMixin) < mro.index(RoutedApplication)
 
 
 def test_requires_an_instance(monkeypatch):
@@ -79,22 +79,22 @@ def test_requires_an_instance(monkeypatch):
     monkeypatch.setitem(sys.modules, "gnr.app", types.ModuleType("gnr.app"))
     monkeypatch.setitem(sys.modules, "gnr.app.gnrapp", fake_module)
     with pytest.raises(ValueError):
-        GenropyProxyOpenApiApplication()
+        GnrAppWrapperApplication()
 
 
-def test_gnr_app_is_exposed(proxy):
-    assert isinstance(proxy.gnr_app, _FakeGnrApp)
+def test_gnr_app_is_exposed(wrapper):
+    assert isinstance(wrapper.gnr_app, _FakeGnrApp)
 
 
-def test_route_cleanup_closes_connection(proxy):
-    assert proxy.gnr_app.db.closed == 0
-    proxy.route_cleanup()
-    assert proxy.gnr_app.db.closed == 1
+def test_route_cleanup_closes_connection(wrapper):
+    assert wrapper.gnr_app.db.closed == 0
+    wrapper.route_cleanup()
+    assert wrapper.gnr_app.db.closed == 1
 
 
-def test_on_shutdown_closes_connection(proxy):
-    proxy.on_shutdown()
-    assert proxy.gnr_app.db.closed == 1
+def test_on_shutdown_closes_connection(wrapper):
+    wrapper.on_shutdown()
+    assert wrapper.gnr_app.db.closed == 1
 
 
 class _DemoApi(RoutingClass):
@@ -108,6 +108,14 @@ class _DemoApi(RoutingClass):
         return type(self.application.gnr_app).__name__
 
 
+class _DemoApplication(GnrAppWrapperApplication):
+    """A wrapper application that attaches the demo routing class under ``api``."""
+
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.route.add_branches({"name": "api", "instance": _DemoApi(self)})
+
+
 @pytest.mark.skipif(not _HAS_GNR, reason="genropy not installed")
 def test_e2e_real_gnrapp_closes_connection():
     pytest.importorskip("psycopg2")
@@ -116,14 +124,10 @@ def test_e2e_real_gnrapp_closes_connection():
 
     GenropySiteEngineFactory(source=_INSTANCE, debug=False).build_site()
 
-    api = _DemoApi(None)
     server = AsgiServer(
-        applications=[
-            (GenropyProxyOpenApiApplication, {"code": "proxy", "instance": _INSTANCE, "routing_class": api})
-        ]
+        applications=[(_DemoApplication, {"code": "wrapper", "instance": _INSTANCE})]
     )
-    app = server.applications["proxy"]
-    api.application = app  # the demo api reads parent.gnr_app
+    app = server.applications["wrapper"]
     assert app.gnr_app is not None
     assert app.gnr_app.db is not None
     assert app.server is server

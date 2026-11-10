@@ -56,13 +56,13 @@ The site and the launch
 
 .. automodule:: genropy_kajenn.spa.cli
 
-The OpenAPI bridge
+The GnrApp wrapper
 ------------------
 
-A genropy database behind an ``OpenApiApplication`` — REST, and MCP through
-``McpOpenApiApplication`` — with thread-local database cleanup.
+The database of a genropy instance inside a kajenn ``RoutedApplication``, with
+thread-local database cleanup.
 
-.. automodule:: genropy_kajenn.proxy.genropy_proxy
+.. automodule:: genropy_kajenn.gnrapp_wrapper.gnrapp_wrapper
 
 The daemonless register
 -----------------------

@@ -76,21 +76,25 @@ class GenropySpaApplication(SpaApplication):
             )
         super().__init__(**kwargs)
 
-    async def on_startup(self) -> None:
+    async def build_pool(self) -> None:
         """Check the recipe names a site for every group, then build the pool.
 
+        A refusal goes through ``refuse_boot``: called by ``on_startup``, the
+        front gives up and, being ``mandatory``, leaves only ``_server``
+        answering.
+
         Raises:
-            ValueError: a group's ``worker_kwargs`` carries no ``source`` —
+            FatalBootError: a group's ``worker_kwargs`` carries no ``source`` —
                 its workers would host no site and refuse every request.
         """
         for name, group in self.server.config.group_kwargs(self.code).items():
             if not (group.get("worker_kwargs") or {}).get("source"):
-                raise ValueError(
+                self.refuse_boot(
                     f"group {name!r}: worker_kwargs names no source — a genropy "
                     "worker without a site serves nothing; declare "
                     "worker_kwargs={'source': <site name or path>} in the recipe"
                 )
-        await super().on_startup()
+        await super().build_pool()
 
     @route(media_type="text/plain")
     def metrics(self) -> str:

@@ -25,6 +25,7 @@ import pytest
 from kajenn import AsgiServer
 from kajenn_orchestra.spa_app import SPA_CONNECTION_ID_COOKIE, SpaApplication
 from kajenn.config import AsgiConfigBuilder
+from kajenn.lifespan import FatalBootError
 
 from genropy_kajenn.spa import GenropySpaApplication
 from genropy_kajenn.spa.cli import CONFIG
@@ -76,8 +77,8 @@ class _SourcelessRecipe(AsgiConfigBuilder):
 async def test_startup_refuses_a_group_without_a_source():
     server = AsgiServer(config=_SourcelessRecipe)
     front = server.applications["site"]
-    with pytest.raises(ValueError, match="names no source"):
-        await front.on_startup()
+    with pytest.raises(FatalBootError, match="names no source"):
+        await front.build_pool()
 
 
 # ------------------------------------------------------------------
