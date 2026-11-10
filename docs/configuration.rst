@@ -171,17 +171,17 @@ documentation lists the keys.
 Channel authentication over ``adm.api_token``
 ---------------------------------------------
 
-``GenropyProxyMixin`` carries an ``authenticate`` route that verifies a kajenn
+``GnrAppWrapperMixin`` carries an ``authenticate`` route that verifies a kajenn
 channel's ``Bearer`` credential against the instance's ``adm.api_token`` table.
-Mount a proxy application on the instance and name the route as the channel's
+Mount a ``GnrAppWrapperApplication`` on the instance and name the route as the channel's
 ``authentication_route``:
 
 .. code-block:: python
 
    apps = cfg.applications()
-   apps.application(code="proxy", app_class=GenropyProxyOpenApiApplication,
+   apps.application(code="gnrapp", app_class=GnrAppWrapperApplication,
                     instance="mysite")
-   cfg.channels().channel(name="rest", authentication_route="/proxy/authenticate")
+   cfg.channels().channel(name="api", authentication_route="/gnrapp/authenticate")
 
 kajenn calls the route over its bus with the whole ``Authorization`` value; a
 plain HTTP request to the route gets 403. The route accepts only the ``Bearer``

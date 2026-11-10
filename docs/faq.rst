@@ -115,7 +115,6 @@ What state is this package in?
 
    .. note::
 
-      ``genropy_kajenn.__version__`` and ``genropy_kajenn.spa.__version__`` read
-      the version from the installed distribution metadata.
-      ``genropy_kajenn.proxy.__version__`` is written by hand and follows the
-      distribution at each release.
+      ``genropy_kajenn.__version__``, ``genropy_kajenn.spa.__version__`` and
+      ``genropy_kajenn.gnrapp_wrapper.__version__`` read the version from the
+      installed distribution metadata.

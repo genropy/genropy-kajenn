@@ -208,4 +208,4 @@ describe it.
 | The in-process register | `siteregister/siteregister_client.py` |
 | The global store on the commander | `siteregister/global_store_adapter.py` |
 | The names the legacy imports | `siteregister/siteregister.py`, `handler.py`, `service.py`, `processes.py` |
-| A genropy database behind REST and MCP | `proxy/genropy_proxy.py` |
+| A genropy database inside a kajenn application | `gnrapp_wrapper/gnrapp_wrapper.py` |

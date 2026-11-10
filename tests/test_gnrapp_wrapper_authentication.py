@@ -1,10 +1,10 @@
 # Copyright 2026 Softwell S.r.l.
 # Licensed under the Apache License, Version 2.0
 
-"""The authentication route of GenropyProxyMixin, end to end on test_invoice_pg.
+"""The authentication route of GnrAppWrapperMixin, end to end on test_invoice_pg.
 
-Each test mounts a GenropyProxyOpenApiApplication on a real kajenn server,
-configures a channel whose ``authentication_route`` is the proxy's
+Each test mounts a GnrAppWrapperApplication on a real kajenn server,
+configures a channel whose ``authentication_route`` is the wrapper's
 ``authenticate`` route, and sends a request carrying ``Authorization: Bearer``
 to a route that returns what the handler sees of its avatar. Tokens and the
 user are created through ``adm.api_token`` / ``adm.user`` and deleted after.
@@ -29,7 +29,7 @@ from genro_routes import route
 
 from kajenn import RoutedApplication
 from kajenn.config.templates import CONFIGURATION_TEMPLATES
-from genropy_kajenn.proxy import GenropyProxyOpenApiApplication
+from genropy_kajenn.gnrapp_wrapper import GnrAppWrapperApplication
 
 
 class Echo(RoutedApplication):
@@ -43,10 +43,10 @@ class Echo(RoutedApplication):
 class Recipe(CONFIGURATION_TEMPLATES["default"]):
     def applications_section(self, cfg):
         apps = cfg.applications()
-        apps.application(code="proxy", app_class=GenropyProxyOpenApiApplication,
+        apps.application(code="proxy", app_class=GnrAppWrapperApplication,
                          instance="test_invoice_pg")
         apps.application(code="echo", app_class=Echo)
-        cfg.channels().channel(name="rest", authentication_route="/proxy/authenticate")
+        cfg.channels().channel(name="api", authentication_route="/proxy/authenticate")
 '''
 
 
@@ -61,6 +61,10 @@ async def running(tmp_path):
         {"type": "lifespan", "asgi": {"version": "3.0"}}, inbox.get, outbox.put))
     await inbox.put({"type": "lifespan.startup"})
     assert (await outbox.get())["type"] == "lifespan.startup.complete"
+    # Every application but _server answers 503 until its on_startup returns.
+    async with asyncio.timeout(10):
+        while not all(server.is_enabled(code) for code in server.applications):
+            await asyncio.sleep(0.005)
     try:
         yield server
     finally:
@@ -89,7 +93,7 @@ async def avatar_of(server, token):
 
 
 class Rows:
-    """The adm rows one test creates through the proxy's db, deleted after."""
+    """The adm rows one test creates through the wrapper's db, deleted after."""
 
     def __init__(self, db):
         self.db = db
@@ -230,9 +234,9 @@ async def test_the_route_reports_the_tokens_expiry_as_valid_until(live):
                                        expires_ts=datetime.now(timezone.utc) + timedelta(days=1))
     _, lasting = rows.token(description="lasting")
     expires_ts = rows.read_token(expiring_id)["expires_ts"]
-    answer = await server.kbus_call("/proxy/authenticate", {"credential": f"Bearer {expiring}", "channel": "rest"})
+    answer = await server.kbus_call("/proxy/authenticate", {"credential": f"Bearer {expiring}", "channel": "api"})
     assert answer["valid_until"] == expires_ts.timestamp()
-    answer = await server.kbus_call("/proxy/authenticate", {"credential": f"Bearer {lasting}", "channel": "rest"})
+    answer = await server.kbus_call("/proxy/authenticate", {"credential": f"Bearer {lasting}", "channel": "api"})
     assert answer["valid_until"] is None
 
 

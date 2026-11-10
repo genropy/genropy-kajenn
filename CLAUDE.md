@@ -25,7 +25,7 @@ genropy-asgi `29008fa`, without history, the way kajenn was born from genro-asgi
 - **Naming**: package `genropy-kajenn` (PyPI, hyphen) · import `genropy_kajenn` (underscore).
 - Depends on `kajenn` and `kajenn-orchestra` as libraries. What `src/` imports from them:
   - `kajenn`: `AsgiServer`, `HTTPForbidden`, `HTTPUnauthorized`; from submodules
-    `AsgiConfigBuilder` (`kajenn.config`), `OpenApiApplication` (`kajenn.applications.openapi`).
+    `AsgiConfigBuilder` (`kajenn.config`), `RoutedApplication` (`kajenn.routed_application`).
   - `kajenn_orchestra`: `ConfigurationProfilesApplication`, `RegisterRegistry`, `PageRow`;
     from submodules `SpaCommander`, `SpaWorker` (`kajenn_orchestra.orchestration`),
     `CommanderEnvelopeHandler` (`.orchestration.envelope_handler`), `RequestSlot`
@@ -67,8 +67,8 @@ genropy-asgi `29008fa`, without history, the way kajenn was born from genro-asgi
   the `gnr.web.daemon` client — the surface the site calls. Reads are worker-local;
   cross-worker delivery rides the end-of-request exchange with the commander's desk.
   The daemon override engages ONLY with `GNR_DAEMON_PROVIDER=genropy-kajenn` (genropy #1070).
-- **Proxy** (`GenropyProxyOpenApiApplication`, `proxy/`): a separate, smaller thing — the
-  legacy db behind an OpenAPI application; unrelated to the SPA pool.
+- **GnrApp wrapper** (`GnrAppWrapperApplication`, `gnrapp_wrapper/`): a separate, smaller
+  thing — the legacy db inside a kajenn `RoutedApplication`; unrelated to the SPA pool.
 
 ### Cemented decisions — DO NOT reopen
 

@@ -1,25 +1,28 @@
 # Copyright 2025 Softwell S.r.l.
 # Licensed under the Apache License, Version 2.0
 
-"""GenropyProxyMixin — a genropy legacy db behind an OpenApiApplication.
+"""GnrAppWrapperMixin — the db of a genropy legacy instance inside a kajenn application.
 
-An ``OpenApiApplication`` mounts a RoutingClass and exposes it as REST (and, via
-``McpOpenApiApplication``, as MCP). When those handlers need the genropy legacy
-db, someone must own its lifecycle: the connection is thread-local and must be
-closed on the thread that opened it — the executor thread where the handler ran,
-not the loop. kajenn provides exactly that hook (``route_cleanup``, run in
-the executor thread by ``make_callable``); this mixin fills it.
+The routes of a kajenn application that read or write a genropy legacy db need
+someone to own its lifecycle: the connection is thread-local and must be closed
+on the thread that opened it — the executor thread where the handler ran, not
+the loop. kajenn provides exactly that hook (``route_cleanup``, run in the
+executor thread by ``make_callable``); this mixin fills it.
 
-The mixin instantiates a ``GnrApp`` and exposes it as ``self.gnr_app`` (the only
-channel the mounted RoutingClass reads, e.g. through its parent). It overrides
-only what it owns — ``route_cleanup`` (close the current thread's connection) —
-and never the ``OpenApiApplication`` machinery. Direction of dependency is
-genropy-kajenn -> kajenn: this imports ``gnr.*``; kajenn never imports genropy.
+The mixin instantiates a ``GnrApp`` and exposes it as ``self.gnr_app``. It
+overrides only what it owns — ``route_cleanup`` (close the current thread's
+connection) — and never the ``RoutedApplication`` machinery. Direction of
+dependency is genropy-kajenn -> kajenn: this imports ``gnr.*``; kajenn never
+imports genropy.
 
-Compose it with the base to get a mountable app::
+An application that exposes routes on the genropy db subclasses
+``GnrAppWrapperApplication`` and declares them, or attaches a routing class it
+already has in its own constructor::
 
-    class GenropyProxyOpenApiApplication(GenropyProxyMixin, OpenApiApplication):
-        ...
+    class Invoices(GnrAppWrapperApplication):
+        def __init__(self, **kwargs):
+            super().__init__(**kwargs)
+            self.route.add_branches({"name": "api", "instance": InvoiceApi(self)})
 """
 
 from __future__ import annotations
@@ -30,35 +33,34 @@ from typing import Any
 from genro_routes import route
 
 from kajenn import HTTPForbidden, HTTPUnauthorized
-from kajenn.applications.openapi import OpenApiApplication
+from kajenn.routed_application import RoutedApplication
 
-log = logging.getLogger("genropy_kajenn.proxy")
+log = logging.getLogger("genropy_kajenn.gnrapp_wrapper")
 
-__all__ = ["GenropyProxyMixin", "GenropyProxyOpenApiApplication"]
+__all__ = ["GnrAppWrapperApplication", "GnrAppWrapperMixin"]
 
 
-class GenropyProxyMixin:
+class GnrAppWrapperMixin:
     """Owns a ``GnrApp`` and closes its db connection in the executor thread.
 
-    Mixed before an ``OpenApiApplication``: it builds the GnrApp in its own
-    ``__init__`` (before delegating to the base, which mounts the RoutingClass),
+    Mixed before a ``RoutedApplication``: it builds the GnrApp in its own
+    ``__init__`` (before delegating to the base),
     exposes it as ``gnr_app``, and fills ``route_cleanup`` to release the
     thread-local db connection after each handler — where it is thread-correct.
     """
 
     def __init__(self, *, instance: str | None = None, debug: bool = False, **kwargs: Any) -> None:
-        """Build the GnrApp, then let the cooperative chain mount the API (D16).
+        """Build the GnrApp, then let the cooperative chain build the application (D16).
 
         Args:
             instance: genropy instance name (or path) resolved by GnrApp.
             debug: Passed through to GnrApp.
-            **kwargs: Forwarded up the chain (routing_class, module, docs,
-                api_name, code, mount, ...).
+            **kwargs: Forwarded up the chain (code, mount, docs, ...).
         """
         from gnr.app.gnrapp import GnrApp
 
         if not instance:
-            raise ValueError("GenropyProxyMixin requires an 'instance'")
+            raise ValueError("GnrAppWrapperMixin requires an 'instance'")
         log.info("Creating GnrApp for instance '%s'", instance)
         self._gnr_app = GnrApp(instance, debug=debug)
         log.info("GnrApp '%s' ready", instance)
@@ -66,7 +68,7 @@ class GenropyProxyMixin:
 
     @property
     def gnr_app(self) -> Any:
-        """The hosted GnrApp — the only channel the mounted RoutingClass reads."""
+        """The hosted GnrApp, read by the routes of the application."""
         return self._gnr_app
 
     def route_cleanup(self) -> None:
@@ -133,10 +135,10 @@ class GenropyProxyMixin:
         super().on_shutdown()  # type: ignore[misc]
 
 
-class GenropyProxyOpenApiApplication(GenropyProxyMixin, OpenApiApplication):
-    """OpenApiApplication hosting a GnrApp, mountable on an AsgiServer.
+class GnrAppWrapperApplication(GnrAppWrapperMixin, RoutedApplication):
+    """A ``RoutedApplication`` hosting a GnrApp, mountable on an AsgiServer.
 
     MRO: the mixin owns ``__init__``/``route_cleanup``/``on_shutdown``; the base
-    owns the REST + OpenAPI machinery. Mount it like any OpenApiApplication and
-    give it an ``instance`` plus a ``routing_class`` (or ``module``).
+    owns the routing, the faces and ``_meta``. Subclass it with the routes that
+    use ``self.gnr_app``, and mount the subclass with an ``instance``.
     """

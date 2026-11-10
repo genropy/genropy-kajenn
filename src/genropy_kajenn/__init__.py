@@ -11,8 +11,8 @@ genropy-specific bridge on top of it. Three submodules, the only ``gnr.*``-aware
   kajenn-orchestra's ``SpaApplication``) whose pool workers are ``GenropyWorker``
   instances hosting a legacy ``GnrWsgiSite``, plus the ``gnrkajenn`` CLI and the
   in-process register client.
-- ``genropy_kajenn.proxy`` — the OpenAPI bridge: a ``GnrApp`` behind an
-  ``OpenApiApplication`` with thread-local db cleanup.
+- ``genropy_kajenn.gnrapp_wrapper`` — ``GnrAppWrapperApplication``: a ``GnrApp``
+  inside a kajenn ``RoutedApplication``, with thread-local db cleanup.
 - ``genropy_kajenn.siteregister`` — the daemonless register the legacy imports as
   ``gnr.web.daemon`` (entry-point ``gnr.web:daemon``), replacing the register daemon.
 """
