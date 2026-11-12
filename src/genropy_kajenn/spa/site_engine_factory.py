@@ -38,12 +38,17 @@ from __future__ import annotations
 import atexit
 import logging
 import os
+import sys
 from types import SimpleNamespace
 from typing import Any
 
 log = logging.getLogger("genropy_kajenn.spa")
 
 __all__ = ["GenropySiteEngineFactory"]
+
+#: The platforms where a child forked after a db connection crashes at its own
+#: first connection, unless libpq skips the GSS encryption negotiation.
+GSS_UNSAFE_AFTER_FORK = ("darwin",)
 
 
 class GenropySiteEngineFactory:
@@ -97,6 +102,21 @@ class GenropySiteEngineFactory:
         log.info("GnrWsgiSite %r ready", gnr_site.site_name)
         return gnr_site
 
+    def disable_gss_negotiation(self) -> None:
+        """On macOS, make libpq skip the GSS encryption negotiation in every child.
+
+        The engine opens a db connection before the fork. On macOS a child forked
+        after that crashes at its own first connection: libpq asks whether a
+        Kerberos credential cache exists, the system answers through XPC, and
+        XPC does not work in a forked child that has not executed a new program
+        (segmentation fault in ``xpc_connection_resume``).
+        ``PGGSSENCMODE=disable`` makes libpq skip the question. It is written in
+        the environment, which every child inherits, only on the platforms where
+        the crash exists, and a value the operator already set is kept.
+        """
+        if sys.platform in GSS_UNSAFE_AFTER_FORK:
+            os.environ.setdefault("PGGSSENCMODE", "disable")
+
     def build_group_engine(self) -> Any:
         """The template's one call: the site settled, with no db connection open.
 
@@ -111,7 +131,11 @@ class GenropySiteEngineFactory:
         ``storage("gnr")`` opens ``_main_db``, and a socket inherited by every
         child is a socket every child would speak on. Neither step starts a
         thread, so the fork invariant survives (verified, same day).
+
+        The same connection is why ``disable_gss_negotiation`` runs first: on
+        macOS a child forked after it could not open its own.
         """
+        self.disable_gss_negotiation()
         gnr_site = self.build_site()
         _ = gnr_site.resources_dirs
         gnr_site.storage("gnr")

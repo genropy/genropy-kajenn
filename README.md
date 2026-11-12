@@ -58,8 +58,9 @@ gnrkajenn mysite -p 8080
 
 `mysite` is the genropy instance name — the same you pass to `gnrwsgiserve` — or
 a path to a site directory. That is the whole launch: no worker count to declare
-and no single/pool selector. On macOS export `PGGSSENCMODE=disable`, because
-libpq negotiating Kerberos inside a forked child crashes it.
+and no single/pool selector. On macOS the pool sets `PGGSSENCMODE=disable`
+for its workers, unless the variable is already set: libpq negotiating Kerberos
+inside a forked child crashes it.
 
 Site-wide counters, no authentication needed:
 
