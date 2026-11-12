@@ -75,14 +75,28 @@ def load_capture(path):
 def build_plan(rows):
     """Return (login_calls, pages) extracted from the capture.
 
-    login_calls: list of form dicts for the two login pageCalls (frame page).
+    login_calls: list of form dicts that log a user in on the frame page: its
+            ``main`` call, then the two login pageCalls.
     pages: OrderedDict { th_path_with_query : {"get_path":..., "main": form,
             "heavy": [forms of app.getSelection]} }
     """
     posts = [r for r in rows if r.get("rpc_method") and r["method"] == "POST"]
     gets = [r for r in rows if r["method"] == "GET"]
 
-    login_calls = [r["form"] for r in posts if "login" in (r["rpc_method"] or "").lower()]
+    login_rows = [r for r in posts if "login" in (r["rpc_method"] or "").lower()]
+    # The login pageCalls travel in the mixin form (``*|login:LoginComponent;...``).
+    # Before login genropy serves such a call only when the page has already mixed
+    # that component in, and the page does it when it is built: its ``main`` call.
+    # A browser always sends ``main`` first, so the plan replays it first too;
+    # without it both login calls answer ``expired``.
+    frame_main = []
+    if login_rows:
+        before_login = posts[: posts.index(login_rows[0])]
+        frame_main = [
+            r for r in before_login
+            if r["rpc_method"] == "main" and r["path"].split("?")[0] == "/"
+        ][-1:]
+    login_calls = [r["form"] for r in frame_main + login_rows]
 
     # map TH iframe GET requests by table path (strip query for grouping key)
     th_gets = OrderedDict()
