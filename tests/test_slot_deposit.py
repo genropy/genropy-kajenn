@@ -8,7 +8,10 @@ only a page's own envelope reaches: a ``rootPage`` webhook, or a request that
 failed after its commit, announced to nobody. The end of the stitching delivers
 whatever the slot still holds through ``/commander/delivery/deposit`` — filed in
 the subscribers' queues, nothing retired, because there is no page to answer —
-and after a collect the slot is empty, so nothing is delivered twice. Migrated
+and after a collect the slot is empty, so nothing is delivered twice. A site
+that raises answers ``500`` from the worker (kajenn-orchestra 0.6.1): the
+request still returns, with that answer, and the deposits leave all the same.
+Migrated
 from the core (kajenn ``tests/orchestration/test_contract_slot_deposit.py`` at
 ``f3c7962``) with #59: two GenropyWorkers under one commander.
 """
@@ -76,12 +79,12 @@ def test_a_request_failing_after_its_commit_still_delivers(two_pages, monkeypatc
 
     monkeypatch.setattr(lane.worker, "wsgi_app", wsgi_app)
     payload = {"http": {"method": "GET", "path": "/", "cid": "c1"}, "identity": "alice"}
-    with pytest.raises(RuntimeError):
-        lane.run(lane.worker._serve_request(payload))
+    answer = lane.run(lane.worker._serve_request(payload))
+    assert answer["status"] == 500
     assert [deposit["table"] for deposit in lane.desk.page_dbevent_map["p2"]] == [TABLE]
 
 
-def test_a_refused_deposit_never_replaces_the_sites_own_exception(two_pages, monkeypatch):
+def test_a_refused_deposit_never_replaces_the_sites_own_failure(two_pages, monkeypatch):
     lane, other = two_pages
 
     async def refusing_call(path, data=None):
@@ -95,6 +98,6 @@ def test_a_refused_deposit_never_replaces_the_sites_own_exception(two_pages, mon
 
     monkeypatch.setattr(lane.worker, "wsgi_app", wsgi_app)
     payload = {"http": {"method": "GET", "path": "/", "cid": "c1"}, "identity": "alice"}
-    with pytest.raises(RuntimeError):
-        lane.run(lane.worker._serve_request(payload))
+    answer = lane.run(lane.worker._serve_request(payload))
+    assert answer["status"] == 500
     assert "p2" not in lane.desk.page_dbevent_map
