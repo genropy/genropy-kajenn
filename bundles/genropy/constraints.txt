@@ -1,0 +1,7 @@
+# Limits used when the lock of the genropy bundle is made again.
+# python-dateutil 3 and 4 are refused by every current botocore: without this
+# line the resolver goes back to a boto3 of 2014.
+python-dateutil<3
+# pymupdf 2 requires onnxruntime and numpy for a layout analysis genropy does
+# not use.
+pymupdf<2
