@@ -1,0 +1,5 @@
+# The image is built from the genropy-kajenn wheel only. This file applies
+# to the Dockerfile beside it; other builds of the repository keep their
+# own context.
+*
+!dist/*.whl
