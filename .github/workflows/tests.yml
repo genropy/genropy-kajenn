@@ -6,20 +6,45 @@ name: Tests
   pull_request:
     branches: ['main', 'develop']
   workflow_dispatch:
+    inputs:
+      genropy_ref:
+        description: 'genropy branch or commit to test and to build the bundles from'
+        default: develop
   # Daily run against the latest released genro-* dependencies: a change
   # published in another genro repository surfaces here without a push.
   schedule:
     - cron: '0 5 * * *'
 
 jobs:
+  # One genropy commit for the whole run: the tests and the bundles work on
+  # the same tree, also when the branch moves while the run is going.
+  genropy-commit:
+    name: Resolve the genropy commit
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      sha: ${{ steps.resolve.outputs.sha }}
+    steps:
+      - name: Check out genropy
+        uses: actions/checkout@v4
+        with:
+          repository: genropy/genropy
+          ref: ${{ inputs.genropy_ref || 'develop' }}
+      - name: Commit of the checkout
+        id: resolve
+        run: echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+
   test:
     name: pytest + ruff (Linux/glibc, Python ${{ matrix.python-version }})
+    needs: genropy-commit
     runs-on: ubuntu-latest
     strategy:
       fail-fast: false
       matrix:
-        # The lowest version requires-python declares and the latest one.
-        python-version: ['3.11', '3.14']
+        # The lowest version requires-python declares, the one of the
+        # container image and the latest one.
+        python-version: ['3.11', '3.13', '3.14']
     permissions:
       contents: read
       id-token: write
@@ -52,11 +77,11 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Check out genropy (develop)
+      - name: Check out genropy
         uses: actions/checkout@v4
         with:
           repository: genropy/genropy
-          ref: develop
+          ref: ${{ needs.genropy-commit.outputs.sha }}
           path: genropy
 
       - name: Set up Python
@@ -121,3 +146,67 @@ jobs:
           files: ./coverage.xml
           disable_search: true
           fail_ci_if_error: true
+
+  # After the tests, never for a pull request: the genropy bundle of the
+  # commit the tests ran on, and the application bundle of test_invoice on
+  # top of it. A bundle is published only for a genropy commit on which the
+  # tests pass. Both are built under the genropy-kajenn image of the latest
+  # release and tagged with the genropy commit.
+  bundles:
+    name: Publish the genropy and test_invoice bundles
+    needs: [genropy-commit, test]
+    if: github.event_name != 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
+    env:
+      IMAGE: ghcr.io/genropy/genropy-kajenn:latest
+      REGISTRY: ghcr.io/genropy
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check out genropy
+        uses: actions/checkout@v4
+        with:
+          repository: genropy/genropy
+          ref: ${{ needs.genropy-commit.outputs.sha }}
+          path: genropy
+
+      # The genropy bundle holds no application project.
+      - name: Set the test_invoice project aside
+        run: |
+          mkdir -p "$RUNNER_TEMP/application"
+          mv genropy/projects/test_invoice "$RUNNER_TEMP/application/test_invoice"
+
+      - uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # build.sh uses the builder of the runner as it is: the bundles are
+      # loaded among the local images and pushed from there, so the
+      # application bundle finds the genropy bundle it starts FROM.
+      - name: Build and push the genropy bundle
+        id: genropy
+        run: |
+          reference=$(./bundles/build.sh genropy genropy "${{ needs.genropy-commit.outputs.sha }}")
+          echo "reference=$reference" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push the test_invoice bundle
+        id: application
+        run: |
+          reference=$(./bundles/build.sh application "$RUNNER_TEMP/application/test_invoice" \
+            test_invoice test_invoice_pg "${{ steps.genropy.outputs.reference }}" \
+            test-invoice-bundle "${{ needs.genropy-commit.outputs.sha }}")
+          echo "reference=$reference" >> "$GITHUB_OUTPUT"
+
+      - name: Write the references to the summary
+        run: |
+          {
+            echo "genropy commit: ${{ needs.genropy-commit.outputs.sha }}"
+            echo
+            echo "- genropy bundle: \`${{ steps.genropy.outputs.reference }}\`"
+            echo "- test_invoice bundle: \`${{ steps.application.outputs.reference }}\`"
+          } >> "$GITHUB_STEP_SUMMARY"
