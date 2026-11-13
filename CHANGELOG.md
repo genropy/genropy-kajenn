@@ -5,6 +5,26 @@ All notable changes to genropy-kajenn are recorded here. The format follows
 [Semantic Versioning](https://semver.org/). Releases before 0.6.0 are listed
 on [GitHub Releases](https://github.com/genropy/genropy-kajenn/releases).
 
+## [0.7.0] - 2026-11-13
+
+### Added
+
+- The container image `ghcr.io/genropy/genropy-kajenn`: genropy-kajenn on top
+  of the kajenn-orchestra image, started with `kajenn serve` on
+  `/app/config.py`. It holds no genropy and no application, and carries no
+  `/app/config.py`: an installation brings its recipe. Published at every
+  release as `X.Y.Z` and `latest`. `/image-packages.txt` lists its Python
+  packages with their versions (#23).
+
+### Changed
+
+- Requires kajenn-orchestra 0.6.1 (#17).
+
+### Fixed
+
+- On macOS a pool started without `PGGSSENCMODE=disable` could not start a
+  worker. The pool now sets it when the variable is not set (#21).
+
 ## [0.6.0] - 2026-11-10
 
 ### Breaking
