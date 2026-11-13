@@ -22,6 +22,7 @@ Real site, no stubs: what these tests protect is the behaviour of the real
 """
 
 import importlib.util
+import os
 import tempfile
 import threading
 
@@ -85,6 +86,36 @@ def test_the_engine_starts_no_thread(site_available):
     site = make_factory().build_group_engine()
     try:
         assert threading.active_count() == before
+    finally:
+        site.on_site_stop()
+
+
+def test_a_forked_child_can_open_its_db_connection(site_available, monkeypatch):
+    # The engine opens a connection before the fork. On macOS a child forked
+    # after that crashed at its own first connection, unless the environment
+    # told libpq to skip the GSS negotiation: the factory now says it itself.
+    monkeypatch.delenv("PGGSSENCMODE", raising=False)
+    site = make_factory().build_group_engine()
+    try:
+        child = os.fork()
+        if child == 0:
+            try:
+                site.db.table("adm.user").query().count()
+            except BaseException:
+                os._exit(1)
+            os._exit(0)
+        _pid, status = os.waitpid(child, 0)
+        assert not os.WIFSIGNALED(status), f"the child was killed by signal {os.WTERMSIG(status)}"
+        assert os.WEXITSTATUS(status) == 0
+    finally:
+        site.on_site_stop()
+
+
+def test_a_gss_mode_the_operator_set_is_kept(site_available, monkeypatch):
+    monkeypatch.setenv("PGGSSENCMODE", "prefer")
+    site = make_factory().build_group_engine()
+    try:
+        assert os.environ["PGGSSENCMODE"] == "prefer"
     finally:
         site.on_site_stop()
 
