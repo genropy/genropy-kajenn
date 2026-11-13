@@ -6,9 +6,10 @@ the worker). Credentials are injected BOTH in the flat user=/password= fields
 login_doLogin (<user>...</user> / <password>...</password>) — the flat
 replacement alone leaves everybody logged in as the captured user.
 
-After every login the probe samples /_server/monitor_state and waits until no
-worker is booting (spawn in flight) before the next login, so the placement
+After every login the probe samples /_server/inspector/census and waits until
+no worker is booting (spawn in flight) before the next login, so the placement
 matches the sequential model instead of stacking logins on the last full worker.
+The server mounts the inspector only when KAJENN_INSPECTOR is set.
 
 Run from temp/benchmark/assets with the pool on 8081:
   PYTHONPATH=. python3 scaling_probe.py --users 15 --base 127.0.0.1:8081
@@ -19,6 +20,7 @@ import json
 import re
 import time
 import urllib.request
+from collections import Counter
 
 import sys
 from pathlib import Path
@@ -35,6 +37,7 @@ BAG_USER_RE = re.compile(r"<user>[^<]*</user>")
 BAG_PASSWORD_RE = re.compile(r"<password>[^<]*</password>")
 CAPTURE = "session_capture.jsonl"
 USERNAMES = "usernames.txt"
+CENSUS_PATH = "/_server/inspector/census"
 
 
 
@@ -74,19 +77,39 @@ def login_user(host, port, login_calls, username, password):
     return c
 
 
-def monitor_pool(base):
-    """Return (workers, tracked) from /_server/monitor_state.
+def pool_from_census(census):
+    """Return (workers, tracked) read from an inspector census.
 
-    workers: [(worker_id, status, users), ...] — the ROUTABLE workers.
-    tracked: the pool's tracked children count (groups.default.workers), which
-    includes a child still booting — tracked > len(workers) is a spawn in flight.
+    The census is keyed by the code of the SPA front, and a server has one
+    front. For every group it lists the living workers, every worker the group
+    tracks with its state, and the worker each user lives on.
+
+    workers: [(worker_id, state, users), ...] — the ROUTABLE workers, the living
+    ones of every group. ``users`` counts the users that live on the worker.
+    tracked: every worker a group tracks, which includes a child still
+    booting — tracked > len(workers) is a spawn in flight.
     """
-    with urllib.request.urlopen(f"http://{base}/_server/monitor_state", timeout=10) as r:
-        state = json.load(r)
-    app = state["apps"][""]
-    workers = [(w["id"], w["status"], w["users"]) for w in app["workers"]]
-    tracked = sum(g["workers"] for g in app["groups"].values())
+    (front,) = census.values()
+    workers = []
+    tracked = 0
+    for group in front["groups"].values():
+        tracked += len(group["workers"])
+        hosted = Counter(worker for worker in group["user_worker_map"].values() if worker)
+        workers.extend(
+            (name, group["workers"][name]["state"], hosted[name])
+            for name in group["living_workers"]
+        )
     return workers, tracked
+
+
+def monitor_pool(base):
+    """Return (workers, tracked) from /_server/inspector/census.
+
+    See ``pool_from_census`` for the two values. The census answers only on a
+    server started with ``KAJENN_INSPECTOR`` set.
+    """
+    with urllib.request.urlopen(f"http://{base}{CENSUS_PATH}", timeout=10) as r:
+        return pool_from_census(json.load(r))
 
 
 def wait_pool_settled(base, timeout=60.0):
